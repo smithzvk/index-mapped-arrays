@@ -15,51 +15,51 @@
 
 (declaim (optimize (speed 3) (debug 0) (safety 0) (compilation-speed 0)))
 
-(defstruct (index-mapped-array
-             (:constructor
-              construct-index-mapped-array (arr elt set dims params map) )
-             (:print-object pprint-imarray)
-             (:conc-name ima-) )
-  "A structure that wraps a data object and functions that know how to
-map a set of indices onto parts of the object.
+;; (defstruct (index-mapped-array
+;;              (:constructor
+;;               construct-index-mapped-array (arr elt set dims params map) )
+;;              (:print-object pprint-imarray)
+;;              (:conc-name ima-) )
+;;   "A structure that wraps a data object and functions that know how to
+;; map a set of indices onto parts of the object.
 
- ARR: some data object
- ELT: A function to accesses the parts of the ARR
- SET: A function that sets the parts of ARR
-DIMS: A list of dimensions
- MAP: A function that transforms its arguments into something that
-      ELT and SET can understand."
-  (arr ; Contains the data
-   #() )
-  (elt ; A function that can be used to access data
-   #'ima-aref); :type (function (index-mapped-array fixnum)) )
-  (set
-   #'(setf ima-aref)); :type (function (t index-mapped-array fixnum)) )
-        ; A `function' that alters data.  This cannot be used for
-        ; objects that do not support in place modification, like
-        ; functional objects (e.g. everything in FUNDS).
-  (dims '(3 3))  ; A list of dimensions.
-  (params '())
-  (map (identity-map '(3 3)))); :type (function * fixnum)) )
-        ; A function that maps indices onto indices.  This function
-        ; takes some arguments and maps them onto any number of
-        ; indicies encoded as multiple values.  It is your
-        ; resposibility to ensure that the ELT and SET commands
-        ; interpret these arguments correctly.
+;;  ARR: some data object
+;;  ELT: A function to accesses the parts of the ARR
+;;  SET: A function that sets the parts of ARR
+;; DIMS: A list of dimensions
+;;  MAP: A function that transforms its arguments into something that
+;;       ELT and SET can understand."
+;;   (arr ; Contains the data
+;;    #() )
+;;   (elt ; A function that can be used to access data
+;;    #'ima-aref); :type (function (index-mapped-array fixnum)) )
+;;   (set
+;;    #'(setf ima-aref)); :type (function (t index-mapped-array fixnum)) )
+;;         ; A `function' that alters data.  This cannot be used for
+;;         ; objects that do not support in place modification, like
+;;         ; functional objects (e.g. everything in FUNDS).
+;;   (dims '(3 3))  ; A list of dimensions.
+;;   (params '())
+;;   (map (identity-map '(3 3)))); :type (function * fixnum)) )
+;;         ; A function that maps indices onto indices.  This function
+;;         ; takes some arguments and maps them onto any number of
+;;         ; indicies encoded as multiple values.  It is your
+;;         ; resposibility to ensure that the ELT and SET commands
+;;         ; interpret these arguments correctly.
 
 ;;;;;;;;;;;;;;;;;
 ;;; The interface
 
-;; (defclass affine-matrix ()
-;;   ((arr :accessor arr-slot :initarg :array)
-;;    (tda :accessor tda :initarg :tda) ))
+(defclass affine-matrix ()
+  ((arr :accessor arr-slot :initarg :array)
+   (tda :accessor tda :initarg :tda) ))
 
-;; (defmethod imaref ((mat affine-matrix) &rest idx)
-;;   (destructuring-bind (i j) idx
-;;     (declare (type fixnum i j)
-;;              (dynamic-extent idx) )
-;;     (the fixnum (aref (the vector (arr-slot mat))
-;;                       (the fixnum (+ (the fixnum (* (the fixnum (tda mat)) i)) j)) ))))
+(defmethod imaref ((mat affine-matrix) &rest idx)
+  (destructuring-bind (i j) idx
+    (declare (type fixnum i j)
+             (dynamic-extent idx) )
+    (the fixnum (aref (the vector (arr-slot mat))
+                      (the fixnum (+ (the fixnum (* (the fixnum (tda mat)) i)) j)) ))))
 
 ;; (defmethod (setf 
 
