@@ -70,7 +70,7 @@ interprets the application of the slot `MAP' onto `IDX' to mean."
            (optimize (speed 3)) )
   (funcall (the function (ima-elt arr))
     arr
-    (apply (ima-map arr) idx) ))
+    (apply (the function (ima-map arr)) idx) ))
 
 (defun (setf imref) (val arr &rest idx)
   "Set whatever piece of the `ARR' slot of ARR that the slot
@@ -78,10 +78,11 @@ interprets the application of the slot `MAP' onto `IDX' to mean."
 mean to VAL."
   (declare (dynamic-extent idx)
            (optimize (speed 3)) )
-  (funcall (ima-set arr)
+  (funcall (the function (ima-set arr))
     val
     arr
-    (apply (ima-map arr) idx) ))
+    (apply (the function (ima-map arr)) idx) )
+  val )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Create mapped structures
