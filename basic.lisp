@@ -13,76 +13,93 @@
 ;;;;;;;;;;;;;;;;;
 ;;; The Structure
 
-(declaim (optimize (speed 3) (debug 0) (safety 0) (compilation-speed 0)))
+(declaim (optimize (speed 2) (debug 0) (safety 0) (compilation-speed 0)))
 
-;; (defstruct (index-mapped-array
-;;              (:constructor
-;;               construct-index-mapped-array (arr elt set dims params map) )
-;;              (:print-object pprint-imarray)
-;;              (:conc-name ima-) )
-;;   "A structure that wraps a data object and functions that know how to
-;; map a set of indices onto parts of the object.
+(defstruct (index-mapped-array
+             (:constructor
+              construct-index-mapped-array (arr dims params map) )
+             (:print-object pprint-imarray)
+             (:conc-name ima-) )
+  "A structure that wraps a data object and functions that know how to
+map a set of indices onto parts of the object.
 
-;;  ARR: some data object
-;;  ELT: A function to accesses the parts of the ARR
-;;  SET: A function that sets the parts of ARR
-;; DIMS: A list of dimensions
-;;  MAP: A function that transforms its arguments into something that
-;;       ELT and SET can understand."
-;;   (arr ; Contains the data
-;;    #() )
-;;   (elt ; A function that can be used to access data
-;;    #'ima-aref); :type (function (index-mapped-array fixnum)) )
-;;   (set
-;;    #'(setf ima-aref)); :type (function (t index-mapped-array fixnum)) )
-;;         ; A `function' that alters data.  This cannot be used for
-;;         ; objects that do not support in place modification, like
-;;         ; functional objects (e.g. everything in FUNDS).
-;;   (dims '(3 3))  ; A list of dimensions.
-;;   (params '())
-;;   (map (identity-map '(3 3)))); :type (function * fixnum)) )
-;;         ; A function that maps indices onto indices.  This function
-;;         ; takes some arguments and maps them onto any number of
-;;         ; indicies encoded as multiple values.  It is your
-;;         ; resposibility to ensure that the ELT and SET commands
-;;         ; interpret these arguments correctly.
+   ARR: some data object
+  DIMS: A list of dimensions
+PARAMS: Parameters that may be needed for 
+   MAP: A function that transforms its arguments into something that
+        the method imref for this type understands"
+  (arr ; Contains the data
+   #() :type vector )
+  (dims '(3 3) :type list)  ; A list of dimensions
+  (params '())
+  ;; A function that maps indices onto one index.  This function takes
+  ;; any number of arguments.
+  (map (identity-map '(3 3)) :type (function * fixnum)) )
+
+(defstruct (affine-mapped-matrix
+             (:constructor
+              create-affine-mapped-matrix (mat dims a b) )
+             ;(:print-object pprint-imarray)
+             (:conc-name amm-) )
+  "A structure that wraps a data object and functions that know how to
+map a set of indices onto parts of the object.
+
+   MAT: some data object
+  DIMS: A list of dimensions
+PARAMS: Parameters that may be needed for 
+   MAP: A function that transforms its arguments into something that
+        the method imref for this type understands"
+  (mat ; Contains the data
+   #() :type vector )
+  (dims '(3 3) :type list)  ; A list of dimensions
+  (a #(1 0 0 1) :type (array integer (4)))
+  (b #(0 0) :type (array integer (2))) )
+
+(defmethod imref ((mat affine-mapped-matrix) &rest idx)
+  (declare (dynamic-extent idx)
+           (optimize (speed 3)) )
+  (destructuring-bind (i j) idx
+    (svref (amm-mat mat)
+           (+ (* (car (amm-dims mat))
+                 (+ (* (aref (amm-a mat) 0) i)
+                    (* (aref (amm-a mat) 1) j)
+                    (aref (amm-b mat) 0) ))
+              (+ (* (aref (amm-a mat) 2) i)
+                 (* (aref (amm-a mat) 3) j)
+                 (aref (amm-b mat) 1) )))))
+
+(defmethod (setf imref) (val (mat affine-mapped-matrix) &rest idx)
+  (declare (dynamic-extent idx)
+           (optimize (speed 3)) )
+  (destructuring-bind (i j) idx
+    (setf (svref (amm-mat mat)
+                 (+ (* (car (amm-dims mat))
+                       (+ (* (aref (amm-a mat) 0) i)
+                          (* (aref (amm-a mat) 1) j)
+                          (aref (amm-b mat) 0) ))
+                    (+ (* (aref (amm-a mat) 2) i)
+                       (* (aref (amm-a mat) 3) j)
+                       (aref (amm-b mat) 1) )))
+          val )))
 
 ;;;;;;;;;;;;;;;;;
 ;;; The interface
 
-(defclass affine-matrix ()
-  ((arr :accessor arr-slot :initarg :array)
-   (tda :accessor tda :initarg :tda) ))
-
-(defmethod imaref ((mat affine-matrix) &rest idx)
-  (destructuring-bind (i j) idx
-    (declare (type fixnum i j)
-             (dynamic-extent idx) )
-    (the fixnum (aref (the vector (arr-slot mat))
-                      (the fixnum (+ (the fixnum (* (the fixnum (tda mat)) i)) j)) ))))
-
-;; (defmethod (setf 
-
-(defun imref (arr &rest idx)
+(defmethod imref ((arr index-mapped-array) &rest idx)
   "Access whatever piece of the `ARR' slot of ARR that the slot `ELT'
 interprets the application of the slot `MAP' onto `IDX' to mean."
   (declare (dynamic-extent idx)
            (optimize (speed 3)) )
-  (funcall (the function (ima-elt arr))
-    arr
-    (apply (the function (ima-map arr)) idx) ))
+  (aref (ima-arr arr) (apply (the function (ima-map arr)) idx)) )
 
-(defun (setf imref) (val arr &rest idx)
+(defmethod (setf imref) (val (arr index-mapped-array) &rest idx)
   "Set whatever piece of the `ARR' slot of ARR that the slot
 `ELT' interprets the application of the slot `MAP' onto IDX to
 mean to VAL."
   (declare (dynamic-extent idx)
            (optimize (speed 3)) )
-  (funcall (the function (ima-set arr))
-    val
-    arr
-    (apply (the function (ima-map arr)) idx) )
-  val )
+  (setf (aref (ima-arr arr) (apply (the function (ima-map arr)) idx))
+        val ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Create mapped structures
@@ -92,8 +109,6 @@ mean to VAL."
 dimensions DIMS replaing the old mapping with MAP"
   (construct-index-mapped-array
    (ima-arr arr)
-   (ima-elt arr)
-   (ima-set arr)
    dims
    params
    map ))
@@ -104,8 +119,6 @@ dimensions DIMS replaing the old mapping with the composition of the
 old map and MAP"
   (construct-index-mapped-array
    (ima-arr arr)
-   (ima-elt arr)
-   (ima-set arr)
    dims
    params
    (multiple-value-compose
@@ -184,12 +197,6 @@ array.  The subspace starts at indices START."
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; Lisp array support
 
-(defun ima-aref (arr &rest idx)
-  (apply #'aref (ima-arr arr) idx) )
-
-(defun (setf ima-aref) (val arr &rest idx)
-  (setf (apply #'aref (ima-arr arr) idx) val) )
-
 (defun make-index-mapped-array (dims &rest rest)
   (awhen (position :initial-contents rest)
     (setf (nth (1+ it) rest) (flatten (nth (1+ it) rest))) )
@@ -197,8 +204,6 @@ array.  The subspace starts at indices START."
     (setf dims (list dims)) )
   (construct-index-mapped-array
    (apply #'make-array (apply #'* dims) rest)
-   #'ima-aref
-   #'(setf ima-aref)
    dims
    '()
    (identity-map dims) ))
@@ -229,8 +234,6 @@ array.  The subspace starts at indices START."
 (defun imarray<-array (arr)
   (construct-index-mapped-array
    (make-array (apply #'* (array-dimensions arr)) :displaced-to arr)
-   #'ima-aref
-   #'(setf ima-aref)
    (array-dimensions arr)
    '()
    (identity-map (array-dimensions arr)) ))
