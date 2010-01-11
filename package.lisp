@@ -1,7 +1,7 @@
 
 
 (defpackage :index-mapped-arrays
-  (:use :cl :tb :alexandria)
+  (:use :cl :tb :alexandria :defclass-star)
   (:shadow #:with-gensyms #:shuffle)
   (:nicknames :ima)
   (:export #:index-mapped-array
@@ -23,11 +23,14 @@
            #:get-vector
            #:get-slice
            #:get-subarray
+           #:column-vector
+           #:row-vector
            ;; Lisp array conversions
            #:imarray<-array
            #:array<-imarray
            ;; Tree/list conversions
            #:tree<-imarray
+           #:copy-ima
            ;; Matrix ops (optimized 2D arrays)
            #:row-vector
            #:column-vector

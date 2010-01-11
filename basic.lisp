@@ -13,7 +13,13 @@
 ;;;;;;;;;;;;;;;;;
 ;;; The Structure
 
-(declaim (optimize (speed 2) (debug 0) (safety 0) (compilation-speed 0)))
+;;; Some imp-specific stuff could be done here (i.e. SBCL can take
+;;; meaningful real values, and of course these mean different things
+;;; from imp to imp)
+;; Development optimizations
+(declaim (optimize (speed 2) (debug 3)))
+;; Production optimizaitons
+;(declaim (optimize (speed 2) (debug 0) (safety 0) (compilation-speed 0)))
 
 (defstruct (index-mapped-array
              (:constructor
@@ -46,9 +52,10 @@ map a set of indices onto parts of the object.
 
    MAT: some data object
   DIMS: A list of dimensions
-PARAMS: Parameters that may be needed for 
-   MAP: A function that transforms its arguments into something that
-        the method imref for this type understands"
+     A: A 2x2 matrix that transforms the index vector
+     B: A length 2 vector that translates the transformed index vector
+
+          idx' = A . idx + b"
   (mat ; Contains the data
    #() :type vector )
   (dims '(3 3) :type list)  ; A list of dimensions
@@ -131,7 +138,8 @@ old map and MAP"
 ;;; These generate quite general, albeit consing, mapping functions.
 
 ;;; Due to the chaining and the use of multiple indices at each level,
-;;; these maps cons on every call.  This could hurt performance.
+;;; these maps cons on every call.  This could (does) hurt
+;;; performance.
 
 (defun identity-map (dims)
   "Returns a function that maps n-DIMS indices onto one index."
@@ -176,7 +184,7 @@ array.  The subspace starts at indices START."
 
 (defun get-vector (arr n
                    &rest fixed
-                   &aux (dims (ima-dims arr)) )
+                   &aux (dims (ima-dimensions arr)) )
   (map-indices arr (list (nth n dims)) '()
                (apply #'vector-mapping n fixed) ))
 
@@ -186,16 +194,27 @@ array.  The subspace starts at indices START."
                '()
                (array-hyperplane-mapping value index) ))
 
-(defun get-subarray (arr &rest ranges
-                     &aux (start (mapcar #'car ranges))
-                          (dims (mapcar (compose #'- (curry #'apply #'-)) ranges)) )
-  (map-indices arr dims '() (apply #'subarray-mapping start)) )
+(defmethod get-subarray (arr &rest ranges)
+  (let ((start (mapcar #'car ranges))
+        (dims (mapcar (compose #'- (curry #'apply #'-)) ranges)) )
+    (map-indices arr dims '() (apply #'subarray-mapping start)) ))
 
 (defun transpose (mat)
   (map-indices mat (ima-dims mat) '() (/. (i j) (values j i))) )
 
+(defmethod column-vector ((arr index-mapped-array) nth)
+  (get-vector arr 0 nth) )
+
+(defmethod row-vector ((arr index-mapped-array) nth)
+  (get-vector arr 1 nth) )
+
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; Lisp array support
+
+(defmethod imref ((mat array) &rest idx)
+  (apply #'aref mat idx) )
+(defmethod (setf imref) (val (mat array) &rest idx)
+  (setf (apply #'aref mat idx) val) )
 
 (defun make-index-mapped-array (dims &rest rest)
   (awhen (position :initial-contents rest)
@@ -208,10 +227,10 @@ array.  The subspace starts at indices START."
    '()
    (identity-map dims) ))
 
-(defun ima-dimensions (arr)
+(defmethod ima-dimensions ((arr index-mapped-array))
   (ima-dims arr) )
 
-(defun ima-dimension (arr n)
+(defmethod ima-dimension ((arr index-mapped-array) n)
   (nth n (ima-dims arr)) )
 
 ;; (defun copy-imarray (array &key 
@@ -258,6 +277,7 @@ array.  The subspace starts at indices START."
 
 (defun pprint-imarray (array stream)
   "Print the index mapped ARRAY to STREAM using the pretty printer."
+  ;; Apapted from the SBCL printer
   (funcall (formatter "#~DD-IMA") stream (length (ima-dimensions array)))
   (labels ((output-guts (stream array)
              (pprint-logical-block (stream nil :prefix "(" :suffix ")")
@@ -267,7 +287,7 @@ array.  The subspace starts at indices START."
                  (if (= 1 (length (ima-dimensions array)))
                      (format stream "~A" (imref array i))
                      (output-guts stream (get-slice array i 0)) )))))
-    (output-guts stream array)))
+    (output-guts stream array) ))
 
 (defun print-imarray (arr str)
   (format str "IM")
@@ -276,34 +296,27 @@ array.  The subspace starts at indices START."
          :length 8
          :stream str ))
 
-;;; Optimized Matrices
+(defmethod copy-ima ((arr index-mapped-array))
+  "This makes a copy of the array and a copy of the map.  Thus we get
+an identical thing coming out."
+  (construct-index-mapped-array
+   (copy-array (ima-arr arr))
+   (ima-dims arr)
+   nil
+   (ima-map arr) ))
 
-;; (defstruct (matrix (:include index-mapped-array)
-;;                    (:constructor construct-matrix (arr elt set dims params map)) )
-;;   params )
-
-;; (defun affine-mapping (a-0 a-i a-j)
-;;   (/. (i j)
-;;     (declare (type fixnum i j a-0 a-i a-j))
-;;     (the fixnum (+ a-0 (* a-i i) (* a-j j))) ))
-
-;; (defun make-matrix (dims &rest key-opts)
-;;   (aif (position :initial-contents key-opts)
-;;        (setf (nth (1+ it) key-opts) (flatten (nth (1+ it) key-opts))) )
-;;   (construct-matrix
-;;    (apply #'make-array (apply #'* dims) key-opts)
-;;    #'ima-aref
-;;    #'(setf ima-aref)
-;;    dims
-;;    (list 0 (second dims) 1)
-;;    (affine-mapping 0 (second dims) 1) ))
-
-;; ;; (defun remap-matrix (mat dims params map)
-;; ;;   (construct-matrix
-;; ;;    (ima-arr mat)
-;; ;;    (ima-elt mat)
-;; ;;    (ima-set mat)
-;; ;;    dims
-;; ;;    params
-   
+(defun flatten-ima-map (arr)
+  "This goes through each element of the array and copies it into a
+new array, making an object where indicies reference the same object
+as in the original, but the map of the new function is just the
+identity function."
+  (let ((new-arr (make-index-mapped-array
+                  (ima-dims arr) )))
+    (labels ((%flatten (idx ranges)
+               (if ranges
+                   (dotimes (i (car ranges))
+                     (%flatten (cons i idx) (cdr ranges)) )
+                   (setf (apply #'imref new-arr idx) (apply #'imref arr idx)) )))
+      (%flatten nil (reverse (ima-dims arr)))
+      new-arr )))
 

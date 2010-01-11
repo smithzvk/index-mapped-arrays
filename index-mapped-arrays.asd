@@ -14,7 +14,9 @@ interfacing functions allow for reading and writing memory associated
 with the last indicies."
   :components ((:file "package")
                (:file "util")
-               (:file "basic"))
+               (:file "basic")
+               (:file "gsl") )
   :serial t
-  :depends-on (:alexandria) )
+  :depends-on (:alexandria :defclass-star :toolbox
+                           :trivial-garbage :gsll :gsl-bindings ))
 
