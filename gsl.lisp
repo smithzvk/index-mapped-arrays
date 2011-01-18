@@ -422,7 +422,7 @@
   (declare (ignore subchar))
   (let ((data (read stream)))
     (case arg
-      ((or 1 nil) (make-gsl-vector (length data) :initial-contents data))
+      ((1 nil) (make-gsl-vector (length data) :initial-contents data))
       (2 (make-gsl-matrix (ima-dimensions data) :initial-contents data))
       (otherwise (error "Invalid dimensionality")) )))
 
