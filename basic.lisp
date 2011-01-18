@@ -42,6 +42,24 @@ PARAMS: Parameters that may be needed for
   ;; any number of arguments.
   (map (identity-map '(3 3)) :type (function * fixnum)) )
 
+(defmacro defcapability (cap spec-lambda-list &body body)
+  `(defmethod ,cap ,spec-lambda-list ,@body) )
+
+(defcapability row-vector ((arr array) i)
+  (make-array (array-dimension arr 0)
+              :displaced-to arr
+              :displaced-index-offset (* i (array-dimension arr 0)) ))
+
+(defcapability gsl-op ((arr array))
+
+(defmethod raw-form ((ima array-ima) &optional type)
+  (if (and type (not (eql type 'array-ima)))
+      (if (compatable? type 'array-ima)
+          (convert ima type)
+          (copy-form ima type) )
+      (if (emulatedp ima)
+          (
+
 (defstruct (affine-mapped-matrix
              (:constructor
               create-affine-mapped-matrix (mat dims a b) )
@@ -202,10 +220,10 @@ array.  The subspace starts at indices START."
 (defun transpose (mat)
   (map-indices mat (ima-dims mat) '() (/. (i j) (values j i))) )
 
-(defmethod column-vector ((arr index-mapped-array) nth)
+(defmethod column-vector ((arr t) nth)
   (get-vector arr 0 nth) )
 
-(defmethod row-vector ((arr index-mapped-array) nth)
+(defmethod row-vector ((arr t) nth)
   (get-vector arr 1 nth) )
 
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -215,6 +233,13 @@ array.  The subspace starts at indices START."
   (apply #'aref mat idx) )
 (defmethod (setf imref) (val (mat array) &rest idx)
   (setf (apply #'aref mat idx) val) )
+
+;; (defmethod get-vector ((mat array) &rest fixed)
+;;   (construct-index-mapped-array
+;;    mat
+;;    (array-dimensions mat)
+;;    '()
+;;    (/. (&rest idx) (apply #'aref mat idx)) ))
 
 (defun make-index-mapped-array (dims &rest rest)
   (awhen (position :initial-contents rest)
