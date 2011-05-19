@@ -335,7 +335,7 @@
 
 (defmethod immod (val (ima array) &rest idx)
   (let ((new (tb::copy-array ima)))
-    (setf (apply #'aref ima idx) val)
+    (setf (apply #'aref new idx) val)
     new ))
 
 (def-unmapper array (ima)
