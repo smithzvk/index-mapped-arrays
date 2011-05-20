@@ -1,7 +1,7 @@
 
-(asdf:defsystem #:index-mapped-arrays
+(asdf:defsystem :index-mapped-arrays
   :name "Index Mapped Arrays"
-  :author "Zachary Smith <elzacho@gmail.com>"
+  :author "Zachary Smith <zachkostsmith@gmail.com>"
   :license "GPL"
   :description
   "This package is useful for working with multi-dimensional array,
@@ -18,4 +18,5 @@ with the last indicies."
                (:file "computed-arrays") )
   :serial t
   :depends-on (:toolbox :iterate) )
+
 
