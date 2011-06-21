@@ -212,6 +212,16 @@
 
 ;;<<>>=
 (def-generic-map
+    (defmethod get-cross-diagonal (ima)
+      (unless (= (length (ima-dimensions ima)) 2)
+        (error "The cross diagonal is only unique for 2D arrays \(matrices)") )
+      (map-indicies ima (/. (idx)
+                           (let ((n (first (ima-dimensions ima))))
+                             (list (- n (car idx) 1) (car idx)) ))
+                    (list (ima-dimension ima 0)) )))
+
+;;<<>>=
+(def-generic-map
     (defmethod get-block (ima start extent)
       "Get a sub-block of the array.  This does not change the dimensionality."
       (map-indicies ima (/. (idx) (mapcar #'+ start idx)) extent) )
