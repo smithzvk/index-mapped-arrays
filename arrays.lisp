@@ -1,7 +1,7 @@
 
 (in-package :ima)
 
-;; @\subsection{Arrays}
+;; @\section{Arrays}
 
 (defmethod ima-dimension ((ima array) axis)
   (array-dimension ima axis) )

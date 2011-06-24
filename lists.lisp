@@ -1,7 +1,7 @@
 
 (in-package :ima)
 
-;; @\subsection{Lists}
+;; @\section{Lists}
 
 ;; @{\em Warning:} Lists of lists are intepreted as higher
 ;; dimensionality IMAs.  To avoid most nonsense, we will just say
