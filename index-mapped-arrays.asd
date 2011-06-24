@@ -13,9 +13,12 @@ be chained together, if wished.  At the lowest level the specified
 interfacing functions allow for reading and writing memory associated
 with the last indicies."
   :components ((:file "package")
+               (:file "util")
                (:file "iter")
-               (:file "ima2")
-               (:file "computed-arrays") )
+               (:file "index-mapped-arrays")
+               (:file "arrays")
+               (:file "lists")
+               (:file "printer") )
   :serial t
   :depends-on (:toolbox :iterate) )
 
