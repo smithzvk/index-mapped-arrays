@@ -110,23 +110,27 @@
   (defmethod (setf imref) (val (ima index-mapped-array) &rest idx)
     (setf (apply #'imref (data-of ima) (funcall (the function (map-of ima)) idx)) val) ))
 
-;; @{\em Note:} If you are using your IMA in a functional way with
-;; <<immod>>, you should probably not be using <<(setf imref)>>.
+;; @{\em Note:} If you are using your IMA in a functional way with <<immod>>,
+;; you should probably not be using <<(setf imref)>>.  <<(setf imref)>> changes
+;; the original data, <<immod>> returns a new structure and makes no promises on
+;; whether structure is shared or not.  You could imagine that you might get
+;; something back from <<immod>> that shares part of it's structure with the
+;; underlying data.  Then when you set, it might be changing the original data,
+;; or not.  When you look at that orignial array, it is very likely that it has
+;; been corrupted.
 
-;; (defmacro modf (place val &rest more)
-;;   (iter (for place = (macroexpand
-;;   (let ((modder (gethash place 
-
-;; (defmethod immod (val ima &rest idx)
-;;   "I don't know how to deal with data type, so I will convert to an
-;; FSet array and go from there" )
+;; <<immod>> is the analog of the function <<(setf imref)>>.  It returns a new
+;; IMA with the given, single element changes to a new value.  Using Modf, we
+;; can define methods that modify general map places, like <<column-vector>> for
+;; instance.
 
 (defmethod immod (val (ima index-mapped-array) &rest idx)
+  "This is an index-mapped-array strcuture, so we will pass the work down to the
+underlying structure."
   (map-indicies (apply #'immod val (data-of ima) (funcall (map-of ima) idx))
                 (map-of ima)
                 (dims-of ima)
                 :map-desc (map-desc-of ima) ))
-
 
 (defmethod ima-flat-ref (ima index)
   (apply #'imref ima
