@@ -197,9 +197,19 @@ IMREF) method definition."
            ,setf-new-val-sym ))
        ,@(iter (for (defun conv-name conv-args . conv-body) in convenience-functions)
                (collecting
-                 `(progn (defun ,conv-name ,conv-args ,@conv-body)
-                         (defun (setf ,conv-name) ,(cons setf-new-val-sym conv-args)
-                           (setf ,@conv-body ,setf-new-val-sym) )))))))
+                (destructuring-bind (doc-string body)
+                    (if (stringp (first conv-body))
+                        (list (list (first conv-body)) (rest conv-body))
+                        (list nil conv-body) )
+                  (cond ((= 1 (length body))
+                         `(progn (defun ,conv-name ,conv-args ,@doc-string ,@body)
+                                 (defun (setf ,conv-name) ,(cons setf-new-val-sym
+                                                            conv-args )
+                                   ,@doc-string
+                                   (setf ,@body ,setf-new-val-sym) )))
+                        (t
+                         (warn "Not creating a SETF function.  In order to create a SETF function, your convenience function bodies can only be a single form which is usable as a place.")
+                         `(defun ,conv-name ,conv-args ,@doc-string ,@body) ))))))))
 
 ;;<<>>=
 (def-generic-map
@@ -216,8 +226,14 @@ IMREF) method definition."
       (map-indices ima (/. (idx)
                           (append (subseq fixed 0 n) idx (subseq fixed n)) )
                    (list (ima-dimension ima n)) ))
-    (defun column-vector (ima n) (get-vector ima 0 n))
-    (defun row-vector (ima n) (get-vector ima 1 n)))
+    (defun column-vector (ima n)
+      "Get the column vector of a 2-D array.  The last index is fixed, the index
+of the vector changes the second index on the array."
+      (get-vector ima 0 n) )
+    (defun row-vector (ima n)
+      "Get the row vector of a 2-D array.  The first index is fixed, the index
+of the vector changes the last index on the array."
+      (get-vector ima 1 n) ))
 
 ;;<<>>=
 (def-generic-map
