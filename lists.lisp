@@ -81,15 +81,49 @@
 ;;   (declare (ignore data-format contents contents-p))
 ;;   (make-list-array (aif ima-dimensions it (ima-dimensions like-this))) )
 
+;; @In order to have list IMAs behave as we have decided they should
+;; (i.e. mutations to any mapping of any array must show up in the other
+;; mappings), we can't do things like set a row of the matrix to a list in the
+;; straightforward way we might like.  We instead have to run of the elements
+;; and set them ourselves.
+
+;; @Okay, I actually don't understand how or why the following works, but it
+;; does.  I will just put some stuff in the test suite to make sure it actually
+;; does work, and works everywhere.  Here we are doing what I said we couldn't
+;; do just above.
+
+;;<<>>=
 (defmethod get-vector ((ima cons) n &rest fixed)
   (let ((row-direction (1- (length (ima-dimensions ima)))))
     (if (= n row-direction)
         (apply #'imref ima fixed)
         (call-next-method) )))
 
-(defmethod get-block ((ima cons) start extent)
-  (let ((first-offset (first start)))
-    (if (= 0 first-offset)
-        (call-next-method)
-        (call-next-method (nthcdr first-offset ima) (cons 0 (rest start)) extent) )))
+;;<<>>=
+(defmethod (setf get-vector) (new-val (ima cons) n &rest fixed)
+  (let ((row-direction (1- (length (ima-dimensions ima)))))
+    (if (= n row-direction)
+        (apply #'(setf imref) new-val ima fixed)
+        (call-next-method) )))
 
+;;<<>>=
+(defmethod get-block ((ima cons) start extent)
+  (let ((dims (ima-dimensions ima))
+        (first-offset (first start)) )
+    (if (= 0 first-offset)
+        (if (and (= (first extent) (length ima))
+                 (every (/. (s e d) (and (= 0 s) (= e d)))
+                        (cdr start) (cdr dims) (cdr extent) ))
+            ima
+            (call-next-method) )
+        (get-block (nthcdr first-offset ima) (cons 0 (rest start)) extent) )))
+
+;;<<>>=
+(defmethod (setf get-block) (new-val (ima cons) start extent)
+  (let ((dims (ima-dimensions ima))
+        (first-offset (first start)) )
+    (if (and (= (first extent) (length ima))
+             (every (/. (s e d) (and (= 0 s) (= e d)))
+                    (cdr start) (cdr dims) (cdr extent) ))
+        (setf (nth first-offset ima) new-val)
+        (call-next-method) )))
