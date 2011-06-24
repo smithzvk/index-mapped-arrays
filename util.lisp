@@ -34,6 +34,3 @@ list."
 multiple values.  This is very useful for multiple-value-compose."
   (apply #'values (permute-list perm args)) )
 
-;; (defun iter-mapinto (seq 
-
-;; (defun imap-into (

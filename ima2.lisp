@@ -131,10 +131,10 @@
 (defmethod immod (val (ima index-mapped-array) &rest idx)
   "This is an index-mapped-array strcuture, so we will pass the work down to the
 underlying structure."
-  (map-indicies (apply #'immod val (data-of ima) (funcall (map-of ima) idx))
-                (map-of ima)
-                (dims-of ima)
-                :map-desc (map-desc-of ima) ))
+  (map-indices (apply #'immod val (data-of ima) (funcall (map-of ima) idx))
+               (map-of ima)
+               (dims-of ima)
+               :map-desc (map-desc-of ima) ))
 
 (defmethod ima-flat-ref (ima index)
   "Allows you to access the data of an IMA in a linear fashion.  No guarantees
@@ -154,7 +154,7 @@ fashion."
   "Returns the linear size of an IMA."
   (apply #'* (ima-dimensions ima)) )
 
-(defun map-indicies (object map dims &key map-desc backend)
+(defun map-indices (object map dims &key map-desc backend)
   "Create an object of type index-mapped-array.  This is basically a fall back
 for times when you want a mapping that a data type can't do natively."
   (make-instance 'index-mapped-array
@@ -205,17 +205,17 @@ IMREF) method definition."
 (def-generic-map
     (defmethod get-projection (ima n val)
       "This reduces the dimensionality, D, to D-1."
-      (map-indicies ima (/. (idx) (append (subseq idx 0 n) (list val) (subseq idx n)))
-                    (let ((count -1))
-                      (remove-if (/. (_) (= n (incf count))) (ima-dimensions ima)) ))))
+      (map-indices ima (/. (idx) (append (subseq idx 0 n) (list val) (subseq idx n)))
+                   (let ((count -1))
+                     (remove-if (/. (_) (= n (incf count))) (ima-dimensions ima)) ))))
 
 ;;<<>>=
 (def-generic-map
     (defmethod get-vector (ima n &rest fixed)
       "This reduces the dimensionality to 1, i.e. a vector."
-      (map-indicies ima (/. (idx)
-                           (append (subseq fixed 0 n) idx (subseq fixed n)) )
-                    (list (ima-dimension ima n)) ))
+      (map-indices ima (/. (idx)
+                          (append (subseq fixed 0 n) idx (subseq fixed n)) )
+                   (list (ima-dimension ima n)) ))
     (defun column-vector (ima n) (get-vector ima 0 n))
     (defun row-vector (ima n) (get-vector ima 1 n)))
 
@@ -224,11 +224,11 @@ IMREF) method definition."
     (defmethod get-diagonal (ima)
       "Map to the vector representing the diagonal of a N-dimensional cubic
 array."
-      (map-indicies ima (/. (idx)
-                           (make-list
-                            (length (ima-dimensions ima))
-                            :initial-element (car idx) ))
-                    (list (ima-dimension ima 0)) )))
+      (map-indices ima (/. (idx)
+                          (make-list
+                           (length (ima-dimensions ima))
+                           :initial-element (car idx) ))
+                   (list (ima-dimension ima 0)) )))
 
 ;;<<>>=
 (def-generic-map
@@ -237,16 +237,16 @@ array."
 the matrix diagonal."
       (unless (= (length (ima-dimensions ima)) 2)
         (error "The cross diagonal is only unique for 2D arrays \(matrices)") )
-      (map-indicies ima (/. (idx)
-                           (let ((n (first (ima-dimensions ima))))
-                             (list (- n (car idx) 1) (car idx)) ))
-                    (list (ima-dimension ima 0)) )))
+      (map-indices ima (/. (idx)
+                          (let ((n (first (ima-dimensions ima))))
+                            (list (- n (car idx) 1) (car idx)) ))
+                   (list (ima-dimension ima 0)) )))
 
 ;;<<>>=
 (def-generic-map
     (defmethod get-block (ima start extent)
       "Get a sub-block of the array.  This does not change the dimensionality."
-      (map-indicies ima (/. (idx) (mapcar #'+ start idx)) extent) )
+      (map-indices ima (/. (idx) (mapcar #'+ start idx)) extent) )
     (defun submatrix (ima i0 j0 n m) (get-block ima (list i0 j0) (list n m))) )
 
 ;;<<>>=
@@ -254,7 +254,7 @@ the matrix diagonal."
     (defmethod transpose (ima)
       "Given a 2-D array, A, return an array, B, where the elements a_ij =
 b_ji."
-      (map-indicies ima (/. (idx) (reverse idx)) (reverse (ima-dimensions ima))) ))
+      (map-indices ima (/. (idx) (reverse idx)) (reverse (ima-dimensions ima))) ))
 
 ;; @<<self-map>> is a trick to allow you to {\em setf} entire IMA
 ;; contents.  {\em contents-of} is a more plain english desciptive
