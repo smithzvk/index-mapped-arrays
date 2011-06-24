@@ -91,11 +91,12 @@
 
 ;;<<>>=
 (defclass index-mapped-array ()
-  ((backend :initarg :backend :accessor backend-of)
-   (data :initarg :data :accessor data-of)
+  ((data :initarg :data :accessor data-of)
    (dims :initarg :dims :accessor dims-of)
    (map-desc :initarg :map-desc :accessor map-desc-of)
    (map :initarg :map :accessor map-of) ))
+
+(defmethod map-desc-of (ima) :raw)
 
 (locally
     (declare (optimize (speed 3)))
@@ -154,17 +155,15 @@ fashion."
   "Returns the linear size of an IMA."
   (apply #'* (ima-dimensions ima)) )
 
-(defun map-indices (object map dims &key map-desc backend)
+(defun map-indices (object map dims &key (map-desc :unknown))
   "Create an object of type index-mapped-array.  This is basically a fall back
-for times when you want a mapping that a data type can't do natively."
+for times when you want a mapping that a data type can't do natively \(which is
+quite often)."
   (make-instance 'index-mapped-array
                  :data object
                  :map map
                  :dims dims
-                 :backend (cond (backend backend)
-                                ((arrayp object) 'array)
-                                ((consp object) 'list) )
-                 :map-desc map-desc ))
+                 :map-desc (list map-desc (map-desc-of object)) ))
 
 ;; @\section{Common (built in) maps}
 
@@ -217,7 +216,8 @@ IMREF) method definition."
       "This reduces the dimensionality, D, to D-1."
       (map-indices ima (/. (idx) (append (subseq idx 0 n) (list val) (subseq idx n)))
                    (let ((count -1))
-                     (remove-if (/. (_) (= n (incf count))) (ima-dimensions ima)) ))))
+                     (remove-if (/. (_) (= n (incf count))) (ima-dimensions ima)) )
+                   :map-desc (list :proj n val) )))
 
 ;;<<>>=
 (def-generic-map
@@ -225,7 +225,8 @@ IMREF) method definition."
       "This reduces the dimensionality to 1, i.e. a vector."
       (map-indices ima (/. (idx)
                           (append (subseq fixed 0 n) idx (subseq fixed n)) )
-                   (list (ima-dimension ima n)) ))
+                   (list (ima-dimension ima n))
+                   :map-desc (list :vec n fixed) ))
     (defun column-vector (ima n)
       "Get the column vector of a 2-D array.  The last index is fixed, the index
 of the vector changes the second index on the array."
@@ -244,7 +245,8 @@ array."
                           (make-list
                            (length (ima-dimensions ima))
                            :initial-element (car idx) ))
-                   (list (ima-dimension ima 0)) )))
+                   (list (ima-dimension ima 0))
+                   :map-desc :diag )))
 
 ;;<<>>=
 (def-generic-map
@@ -262,15 +264,24 @@ the matrix diagonal."
 (def-generic-map
     (defmethod get-block (ima start extent)
       "Get a sub-block of the array.  This does not change the dimensionality."
-      (map-indices ima (/. (idx) (mapcar #'+ start idx)) extent) )
+      (map-indices ima (/. (idx) (mapcar #'+ start idx)) extent
+                   :map-desc (list :block start extent) ))
     (defun submatrix (ima i0 j0 n m) (get-block ima (list i0 j0) (list n m))) )
 
 ;;<<>>=
 (def-generic-map
-    (defmethod transpose (ima)
+    (defmethod permute-indices (ima permutation)
+      "Given an array, A, return an array, B, where the elements a_i...j =
+b_n...m where indices n through m are the indices i through j permuted by
+PERMUTATION."
+      (map-indices ima
+                   (/. (idx) (permute-list permutation idx))
+                   (permute-list permutation (ima-dimensions ima))
+                   :map-desc (list :perm permutation) ))
+    (defun transpose (ima)
       "Given a 2-D array, A, return an array, B, where the elements a_ij =
 b_ji."
-      (map-indices ima (/. (idx) (reverse idx)) (reverse (ima-dimensions ima))) ))
+      (permute-indices ima '(1 0)) ))
 
 ;; @<<self-map>> is a trick to allow you to {\em setf} entire IMA
 ;; contents.  {\em contents-of} is a more plain english desciptive
