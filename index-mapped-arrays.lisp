@@ -155,15 +155,18 @@ fashion."
   "Returns the linear size of an IMA."
   (apply #'* (ima-dimensions ima)) )
 
+(defvar *simplify* t)
+
 (defun map-indices (object map dims &key (map-desc :unknown))
   "Create an object of type index-mapped-array.  This is basically a fall back
 for times when you want a mapping that a data type can't do natively \(which is
 quite often)."
-  (make-instance 'index-mapped-array
-                 :data object
-                 :map map
-                 :dims dims
-                 :map-desc (list map-desc (map-desc-of object)) ))
+  (or (and *simplify* (let ((*simplify* nil)) (simplify map-desc object)))
+      (make-instance 'index-mapped-array
+                     :data object
+                     :map map
+                     :dims dims
+                     :map-desc (list map-desc (map-desc-of object)) )))
 
 ;; @\section{Common (built in) maps}
 

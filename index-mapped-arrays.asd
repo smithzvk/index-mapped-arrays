@@ -16,10 +16,11 @@ with the fundamental data structure and indices."
                (:file "util")
                (:file "iter")
                (:file "index-mapped-arrays")
+               (:file "simplifier")
                (:file "arrays")
                (:file "lists")
                (:file "printer") )
   :serial t
-  :depends-on (:alexandria :iterate) )
+  :depends-on (:alexandria :cl-match :iterate) )
 
 

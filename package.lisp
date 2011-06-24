@@ -1,6 +1,6 @@
 
 (defpackage :index-mapped-arrays
-    (:use :cl :iter :alexandria)
+    (:use :cl :iter :alexandria :cl-match)
   (:nicknames :ima)
   (:export #:imref
            #:immod
