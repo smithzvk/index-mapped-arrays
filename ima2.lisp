@@ -100,14 +100,18 @@
 (locally
     (declare (optimize (speed 3)))
   (defmethod ima-dimension (ima axis)
+    "Return the length of IMA along AXIS."
     (nth axis (ima-dimensions ima)) )
   (defmethod ima-dimensions (ima)
+    "Return the extents of the IMA."
     (dims-of ima) )
   (defmethod imref ((ima index-mapped-array) &rest idx)
+    "Get the element of IMA at indices IDX."
     (declare (optimize (speed 3) (debug 1) (compilation-speed 0) (safety 1) (space 0))
              (dynamic-extent idx) )
     (apply #'imref (data-of ima) (funcall (the function (map-of ima)) idx)) )
   (defmethod (setf imref) (val (ima index-mapped-array) &rest idx)
+    "Set the value of IMA at indices IDX to value VAL."
     (setf (apply #'imref (data-of ima) (funcall (the function (map-of ima)) idx)) val) ))
 
 ;; @{\em Note:} If you are using your IMA in a functional way with <<immod>>,
@@ -133,18 +137,26 @@ underlying structure."
                 :map-desc (map-desc-of ima) ))
 
 (defmethod ima-flat-ref (ima index)
+  "Allows you to access the data of an IMA in a linear fashion.  No guarantees
+are made as to the order in which the elements are ordered \(this may change in
+the future if it becomes benefitial)."
   (apply #'imref ima
          (nd-index index (ima-dimensions ima)) ))
 
 (defmethod (setf ima-flat-ref) (val ima index)
+  "Allows you to set the data of an IMA by referencing the data in a linear
+fashion."
   (setf (apply #'imref ima
                (nd-index index (ima-dimensions ima)) )
         val ))
 
 (defmethod flat-ima-size (ima)
+  "Returns the linear size of an IMA."
   (apply #'* (ima-dimensions ima)) )
 
 (defun map-indicies (object map dims &key map-desc backend)
+  "Create an object of type index-mapped-array.  This is basically a fall back
+for times when you want a mapping that a data type can't do natively."
   (make-instance 'index-mapped-array
                  :data object
                  :map map
@@ -164,6 +176,8 @@ underlying structure."
 
 (defmacro def-generic-map ((defmethod name (&rest args) &body body)
                            &rest convenience-functions )
+  "Define a generic map which includes an IMREF method definition and a \(SETF
+IMREF) method definition."
   (declare (ignore defmethod))
   (with-gensyms (mapped-data-sym mapped-i-sym setf-new-val-sym "DEF-GENERIC-MAP-")
     `(progn
@@ -208,6 +222,8 @@ underlying structure."
 ;;<<>>=
 (def-generic-map
     (defmethod get-diagonal (ima)
+      "Map to the vector representing the diagonal of a N-dimensional cubic
+array."
       (map-indicies ima (/. (idx)
                            (make-list
                             (length (ima-dimensions ima))
@@ -217,6 +233,8 @@ underlying structure."
 ;;<<>>=
 (def-generic-map
     (defmethod get-cross-diagonal (ima)
+      "For 2-D arrays, return the opposite diagonal of the matrix, which crosses
+the matrix diagonal."
       (unless (= (length (ima-dimensions ima)) 2)
         (error "The cross diagonal is only unique for 2D arrays \(matrices)") )
       (map-indicies ima (/. (idx)
@@ -234,6 +252,8 @@ underlying structure."
 ;;<<>>=
 (def-generic-map
     (defmethod transpose (ima)
+      "Given a 2-D array, A, return an array, B, where the elements a_ij =
+b_ji."
       (map-indicies ima (/. (idx) (reverse idx)) (reverse (ima-dimensions ima))) ))
 
 ;; @<<self-map>> is a trick to allow you to {\em setf} entire IMA
@@ -242,8 +262,14 @@ underlying structure."
 
 ;;<<>>=
 (def-generic-map
-    (defmethod self-map (ima) ima)
-    (defun contents-of (ima) (self-map ima)) )
+    (defmethod self-map (ima)
+      "Return an identity map of the IMA.  Useful if you want to SETF an entire
+array."
+      ima )
+    (defun contents-of (ima)
+      "Return an identity map of the IMA.  Useful if you want to SETF an entire
+array."
+      (self-map ima) ))
 
 ;; @\section{Unmapping and converting}
 
@@ -254,6 +280,9 @@ underlying structure."
 ;; any emulated mappings.
 
 (defmacro def-unmapper (type (ima-sym) &body body)
+  "Define a set unmapping routines: one that unmaps given the name of the type,
+one that unmaps given an example of the type, and one that notices the identity
+unmap \(e.g. we want a list and we already have a list)."
   `(progn
      (defmethod unmap-into ((type (eql ',type)) ,ima-sym)
        ,@body )
@@ -263,6 +292,8 @@ underlying structure."
        ,ima-sym )))
 
 (defun unmap (ima)
+  "Unmap an IMA into it's base type.  This searches down the layers of IMAs
+until it finds a non-index-mapped-array structure, then unmaps into that."
   (unmap-into (iter (initially (setf arr ima))
                     (while (typep arr 'index-mapped-array))
                     (for arr = (data-of arr))
@@ -292,6 +323,7 @@ underlying structure."
 
 ;;<<>>=
 (defmethod make-ima ((ima index-mapped-array) &key dims)
+  "Make an IMA with the same base type as the one given."
   (make-ima (iter (initially (setf arr ima))
                   (while (typep arr 'index-mapped-array))
                   (for arr = (data-of arr))
@@ -305,6 +337,7 @@ underlying structure."
 ;; interface.
 
 (defmacro def-maker (type (dims &rest keys) &body body)
+  "Define MAKE-IMA methods for TYPE."
   (with-gensyms (ima-or-type)
     `(progn
        (defmethod make-ima ((,ima-or-type ,type)
@@ -324,6 +357,7 @@ underlying structure."
 ;;     (setf (contents-of new) ima) ))
 
 (defmethod copy-ima (ima)
+  "This is the fallback IMA copy method."
   (let ((new (make-ima ima)))
     (iter (for el1 in-ima ima)
           (for i from 0)
