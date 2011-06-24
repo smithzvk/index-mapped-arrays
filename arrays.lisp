@@ -17,7 +17,7 @@
   (setf (apply #'aref ima idx) val) )
 
 (defmethod immod (val (ima array) &rest idx)
-  (let ((new (tb::copy-array ima)))
+  (let ((new (copy-array ima)))
     (setf (apply #'aref new idx) val)
     new ))
 

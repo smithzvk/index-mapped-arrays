@@ -178,7 +178,7 @@ quite often)."
   "Define a generic map which includes an IMREF method definition and a \(SETF
 IMREF) method definition."
   (declare (ignore defmethod))
-  (with-gensyms (mapped-data-sym mapped-i-sym setf-new-val-sym "DEF-GENERIC-MAP-")
+  (with-gensyms (mapped-data-sym mapped-i-sym setf-new-val-sym)
     `(progn
        (defmethod ,name (,@args)
          ,@body )

@@ -1,6 +1,6 @@
 
 (defpackage :ima-test
-  (:use :stefil :cl :toolbox :ima :iterate)
+  (:use :stefil :cl :ima :iter)
   (:export #:run-tests) )
 
 (in-package ima-test)

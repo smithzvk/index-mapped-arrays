@@ -1,7 +1,63 @@
 
-(in-package :index-mapped-arrays)
+(in-package :ima)
 
-;;; Utilities
+;; Some stuff stripped from my toolbox
+(defun fsubvec (vec &optional (start 0) (end (length vec)))
+  "Access a subsequence from a vector.  Do this with displaced arrays,
+thus we are not consing or copying, but are pointing to the same
+memory.  When we are dealing with functional code, this doesn't matter
+and removing the copying is faster."
+  (make-array (- end start)
+              :displaced-to vec
+              :displaced-index-offset start
+              :element-type (array-element-type vec)
+              :fill-pointer (and (array-has-fill-pointer-p vec)
+                                 (fill-pointer vec) )
+              :adjustable (adjustable-array-p vec) ))
+
+(defmacro /. (args &rest body)
+  "A little lambda replacement, the ``/.'' is stolen from the Qi
+programming language.  Originally just to save typing and horizontal
+space.  Extened it to allow for ignored arguments which are designated
+by the ``_'' symbol."
+  (let ((arglist (mapcar (lambda (arg) (if (and (symbolp arg)
+                                           (equalp (symbol-name arg) "_") )
+                                      (cons :gensym (gensym "IGNORED"))
+                                      arg ))
+                         args )))
+    `(lambda ,(mapcar (lambda (arg)
+                   (if (and (consp arg)
+                            (eql (car arg) :gensym) )
+                       (cdr arg)
+                       arg )) arglist)
+       (declare (ignore
+                 ,@(mapcar #'cdr (remove-if-not
+                                  (lambda (arg)
+                                    (and (consp arg)
+                                         (eql (car arg) :gensym) ))
+                                  arglist ))))
+       ,@body )))
+
+(defun nd-index (linear extents)
+  "Given a row major linear index and a list of array extents
+\(dimensions) return a list of N-D array indicies."
+  (iter (for ext on (append (cdr extents) (list 1)))
+        (let* ((slab-size (apply #'* ext))
+               (idx (floor linear slab-size)) )
+          (decf linear (* slab-size idx))
+          (collect idx) )))
+
+(defun linear-index (index extents)
+  (apply #'+
+         (mapcar #'* index
+                 (iter (for spacing on extents)
+                       (collect (apply #'* (cdr spacing))) ))))
+
+(defun n-times (n func arg)
+  "Self compose FUNC N times with and call on argument ARG."
+  (declare (type (integer 0) n))
+  (cond ((= n 0) arg)
+        (t (funcall func (n-times (1- n) func arg))) ))
 
 (defun list-insert-at (position value list)
   "Insert VALUE at POSITION in LIST."
