@@ -11,6 +11,7 @@
            #:get-projection
            #:get-block #:submatrix
            #:transpose
+           #:self-map #:contents-of
            #:unmap #:unmap-into #:def-unmapper
            #:def-maker
            #:make-ima #:copy-ima
