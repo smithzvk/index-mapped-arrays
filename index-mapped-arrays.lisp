@@ -215,7 +215,7 @@ IMREF) method definition."
 
 ;;<<>>=
 (def-generic-map
-    (defmethod get-projection (ima n val)
+    (defmethod get-slice (ima n val)
       "This reduces the dimensionality, D, to D-1."
       (map-indices ima (/. (idx) (append (subseq idx 0 n) (list val) (subseq idx n)))
                    (let ((count -1))

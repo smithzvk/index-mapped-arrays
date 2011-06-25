@@ -8,7 +8,7 @@
            #:backend-of #:map-of #:data-of #:index-mapped-array
            #:get-vector #:column-vector #:row-vector
            #:get-diagonal
-           #:get-projection
+           #:get-slice
            #:get-block #:submatrix #:subvector
            #:transpose
            #:self-map #:contents-of
