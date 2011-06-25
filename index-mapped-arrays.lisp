@@ -366,18 +366,8 @@ until it finds a non-index-mapped-array structure, then unmaps into that."
 ;; low level work like element types, but allow a fall back high level
 ;; interface.
 
-(defmacro def-maker (type (dims &rest keys) &body body)
-  "Define MAKE-IMA methods for TYPE."
-  (with-gensyms (ima-or-type)
-    `(progn
-       (defmethod make-ima ((,ima-or-type ,type)
-                            &key ,dims ,@keys &allow-other-keys)
-         (let ((,dims (if ,dims ,dims (ima-dimensions ,ima-or-type))))
-           ,@body ))
-       (defmethod make-ima ((,ima-or-type (eql ',type))
-                            &key ,dims ,@keys &allow-other-keys)
-         (declare (ignore ,ima-or-type))
-         ,@body ))))
+(defmethod make-ima-like (ima &key &allow-other-keys)
+  (error "I don't know how to make an IMA like this one") )
 
 ;; This should work, but doesn't.  For now there is a working version below.
 ;; (defmethod copy-ima (ima)

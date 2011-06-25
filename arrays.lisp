@@ -33,7 +33,8 @@
                     (apply #'imref ima (nd-index i (ima-dimensions ima))) )))
     arr ))
 
-(def-maker array (dims (element-type t))
+(defmethod make-ima-like ((ima array) &key (dims (ima-dimensions ima))
+                                           (element-type (array-element-type ima)) )
   (make-array dims :element-type element-type) )
 
 (defmethod get-vector ((ima array) n &rest fixed)

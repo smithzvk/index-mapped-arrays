@@ -74,7 +74,8 @@
       (iter (for i below (car extent))
             (collect (make-list-array (cdr extent))) )))
 
-(def-maker list (dims)
+(defmethod make-ima-like ((list list) &key (dims (ima-dimensions list))
+                                           &allow-other-keys )
   (make-list-array dims) )
 
 ;; (defmethod make-ima ((like-this list)

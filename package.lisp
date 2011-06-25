@@ -13,8 +13,7 @@
            #:transpose
            #:self-map #:contents-of
            #:unmap #:unmap-into #:def-unmapper
-           #:def-maker
-           #:make-ima #:copy-ima
+           #:make-ima-like #:copy-ima
            ;; Iterate extensions
            #:in-column-vectors-of #:in-row-vectors-of
            #:in-ima ))
