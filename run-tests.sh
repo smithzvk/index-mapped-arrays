@@ -1,11 +1,13 @@
 #!/bin/bash
 
+echo "Test results" > test-results
+
 if which sbcl
 then
     sbcl <<EOF
 (ql:quickload :index-mapped-arrays-test)
 (ima-test:run-tests)
-(with-open-file (out #p"test-results" :if-exists :supersede :direction :output)
+(with-open-file (out #p"test-results" :if-exists :append :direction :output)
  (format out "sbcl: Success~%") )
 EOF
 fi
