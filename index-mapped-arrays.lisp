@@ -269,7 +269,17 @@ the matrix diagonal."
       "Get a sub-block of the array.  This does not change the dimensionality."
       (map-indices ima (/. (idx) (mapcar #'+ start idx)) extent
                    :map-desc (list :block start extent) ))
-    (defun submatrix (ima i0 j0 n m) (get-block ima (list i0 j0) (list n m))) )
+    (defun submatrix (ima i0 j0 &optional n m)
+      "Get a submatrix of a matrix \(2D array).  Start at I0 and J0 and extend
+for N and M, respectively.  If N or M are omitted, run to the end of the array."
+      (get-block ima (list i0 j0)
+                 (list (or n (- (ima-dimension ima 0) i0))
+                       (or m (- (ima-dimension ima 1) j0)) )))
+    (defun subvector (ima start &optional extent)
+      "Get a subvector of a vector.  Start at START and extend to for EXTENT
+elements."
+      (get-block ima (list start) (list (or extent (- (ima-dimension ima 0)
+                                                      start ))))))
 
 ;;<<>>=
 (def-generic-map

@@ -9,7 +9,7 @@
            #:get-vector #:column-vector #:row-vector
            #:get-diagonal
            #:get-projection
-           #:get-block #:submatrix
+           #:get-block #:submatrix #:subvector
            #:transpose
            #:self-map #:contents-of
            #:unmap #:unmap-into #:def-unmapper
