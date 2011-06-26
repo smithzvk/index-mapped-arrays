@@ -9,7 +9,7 @@
 
 (defsuite* ima-test)
 
-(defun run-tests ()
+(deftest run-tests ()
   (list-tests)
   (array-tests) )
 
