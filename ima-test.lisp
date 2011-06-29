@@ -1,6 +1,6 @@
 
 (defpackage :ima-test
-  (:use :stefil :cl :ima :iter)
+  (:use :cl :stefil :modf :ima :iter)
   (:export #:run-tests) )
 
 (in-package ima-test)
@@ -10,8 +10,25 @@
 (defsuite* ima-test)
 
 (deftest run-tests ()
+  (modf-test)
   (list-tests)
   (array-tests) )
+
+(deftest modf-test ()
+  ;; vector
+  (is (equal '(1 2 t 4 5) (modf (imref (modf-eval '(1 2 3 4 5)) 2) t)))
+  ;; matrix
+  (is (equal '((1 2) (t 4))
+             (modf (imref (modf-eval '((1 2) (3 4))) 1 0) t) ))
+  ;; nested modf expansions
+  (is (iter
+        (for l1 in-sequence #((1 2) (t 4)))
+        (for l2 in-sequence (modf (imref (imref (modf-eval #((1 2) (3 4))) 1) 0) t))
+        (always
+         (iter
+           (for el1 in l1)
+           (for el2 in l2)
+           (always (equal el1 el2)) )))))
 
 (defun %compare-imas-by-element (ima1 ima2)
   (equal (ima-dimensions ima1) (ima-dimensions ima2))
@@ -74,7 +91,6 @@
     (is (equal (imref 2d-arr 1 1) (imref sub-mat 0 0)))
     (is (equal (imref 2d-arr 1 1) (imref sub-row-vec 0)))
     (is (equal (imref 2d-arr 1 1) (imref sub-col-vec 0))) ))
-
 
 (defsuite* list-ima)
 

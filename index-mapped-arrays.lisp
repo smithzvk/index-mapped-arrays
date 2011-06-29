@@ -9,15 +9,14 @@
 
 ;; @\begin{abstract}
 
-;; Index mapped arrays or IMA is a well integrated, general method of
-;; dealing with arrays in Common Lisp.  It provides facilities to
-;; perform common mappings on lisp data, and foreign data, and
-;; provides a simple interface to extend this behavior.  It is based
-;; around CLOS methods and extensions are written as methods
-;; specializing on your data type.  IMA tries its best to be more than
-;; a simple wrapper around a data type and will operate on the raw
-;; type whenever possible, and falls back on an index mapping
-;; mechanism as versatile as Common Lisp itself.
+;; Index mapped arrays or IMA is a well integrated, general method of dealing
+;; with arrays in Common Lisp.  It provides facilities to perform common
+;; mappings on lisp data, and foreign data, and provides a simple interface to
+;; extend this behavior.  It is based around CLOS methods and extensions are
+;; written as methods specializing on your data type.  IMA tries its best to be
+;; more than a simple wrapper around a data type and will operate on the raw
+;; type whenever possible, and falls back on an index mapping mechanism as
+;; versatile as Common Lisp itself.
 
 ;; @\end{abstract}
 
@@ -27,63 +26,57 @@
 
 ;; @\subsection{A word on the general structure}
 
-;; As stated, IMA is built on CLOS.  I use it in some unorthodox ways,
-;; however.  The basic idea is that any object whose data can be
-;; mapped onto a sequence of numbers can be thought of as an IMA.
-;; That means that arrays, lists, strings, hash tables, even
-;; structures and classes, can be thought of as IMAs.  So in some
-;; sense, the class <<index-mapped-array>> should be thought of as a
-;; superclass to almost anything; somewhere up there by T.  Since I
-;; didn't want to edit the class hierarchy (and doing so is not
-;; portable, right?), many of the IMA methods, <<ima-dimensions>>,
-;; <<get-vector>>, any map really, specialize on class T.  These are
-;; keeping with the normal CLOS way, if you want to modify the
-;; behavior define a more specific method and (possibly) hijack the
-;; method chain.
+;; As stated, IMA is built on CLOS.  I use it in some unorthodox ways, however.
+;; The basic idea is that any object whose data can be mapped onto a sequence of
+;; numbers can be thought of as an IMA.  That means that arrays, lists, strings,
+;; hash tables, even structures and classes, can be thought of as IMAs.  So in
+;; some sense, the class <<index-mapped-array>> should be thought of as a
+;; superclass to almost anything; somewhere up there by T.  Since I didn't want
+;; to edit the class hierarchy (and doing so is not portable, right?), many of
+;; the IMA methods, <<ima-dimensions>>, <<get-vector>>, any map really,
+;; specialize on class T.  These are keeping with the normal CLOS way, if you
+;; want to modify the behavior define a more specific method and (possibly)
+;; hijack the method chain.
 
-;; There is another way that I am using CLOS.  I also wish to have
-;; methods that search from least specific to most specific.  This
-;; could be implemented as a method combination, but it is beyond my
-;; ability.  So as it is, I specialize on class
-;; <<index-mapped-array>>, and that calls the method of the underlying
-;; data type.  Methods that behave this way are <<imref>>,
-;; <<unmap-into>>, and <<make-ima>>.
+;; There is another way that I am using CLOS.  I also wish to have methods that
+;; search from least specific to most specific.  This could be implemented as a
+;; method combination, but it is beyond my ability.  So as it is, I specialize
+;; on class <<index-mapped-array>>, and that calls the method of the underlying
+;; data type.  Methods that behave this way are <<imref>>, <<unmap-into>>, and
+;; <<make-ima>>.
 
 ;; @\subsection{Building your own IMA}
 
-;; @One of the best features of IMA is that it is easy to define your
-;; own IMA interface to some data that the implementors have never
-;; even thought of.  You just have to define methods for the
-;; interfaces you want to use.  A full IMA interface for any data
-;; requires you to define <<ima-dimensions>>, <<ima-dimension>>,
-;; <<imref>>, <<(setf imref)>> if you want to set elements, <<immod>>
-;; if you want to provide a functional modification method, and a set
-;; of <<unmap-into>> methods and <make-ima>> methods.  It sounds like
-;; a lot, but it really isn't.  Some methods can be omitted with
-;; decreased functionality.
+;; @One of the best features of IMA is that it is easy to define your own IMA
+;; interface to some data that the implementors have never even thought of.  You
+;; just have to define methods for the interfaces you want to use.  A full IMA
+;; interface for any data requires you to define <<ima-dimensions>>,
+;; <<ima-dimension>>, <<imref>>, <<(setf imref)>> if you want to set elements,
+;; Modf functions (which I'll refer to as <<(modf imref)>>) if you want to
+;; provide a functional modification method, and a set of <<unmap-into>> methods
+;; and <make-ima>> methods.  It sounds like a lot, but it really isn't.  Some
+;; methods can be omitted with decreased functionality.
 
-;; @The functions <<ima-dimension>>, <<ima-dimensions>>, and <<imref>>
-;; are necessary to hook your data structure into the generic
-;; interface.  They are absolutely required.
+;; @The functions <<ima-dimension>>, <<ima-dimensions>>, and <<imref>> are
+;; necessary to hook your data structure into the generic interface.  They are
+;; absolutely required.
 
-;; @The functions <<(setf imref)>> and <<immod>> offer a way to mutate
-;; or functionally change the IMA.  Typically one is used more often
-;; than the other because a data structure either aims to be
-;; functional or mutable.  If you are using a mutable data format, it
-;; might be nice if you also include an <<immod>> definition, but if
-;; you using an immutable data structure, it is often impossible to
-;; provide a {\em setf} that behaves sanely.
+;; @The functions <<(setf imref)>> and <<(modf imref)>> offer a way to mutate or
+;; functionally change the IMA.  Typically one is used more often than the other
+;; because a data structure either aims to be functional or mutable.  If you are
+;; using a mutable data format, it might be nice if you also include an <<(modf
+;; imref)>> definition, but if you using an immutable data structure, it is
+;; often impossible to provide a {\em setf} that behaves sanely.
 
-;; @The <<unmap-into>> functions allow the user to recieve a version
-;; of the array that is element by element equal (in some sense of the
-;; word) to the IMA.  This might entail no work at all, i.e. you are
-;; not performing any emulated index mappings, or it may entail a
-;; complete copying of the array.  It also allows for transforming
-;; between possible IMA representations, such as from an array to
-;; nested lists or a GSL matrix.  Since this can return you the same
-;; instance, it is helpful to have a <<make-ima>> method which
-;; gaurantees that the memory will be freshly allocated (but the
-;; contents not copied, for copying, see <<copy-ima>>).
+;; @The <<unmap-into>> functions allow the user to recieve a version of the
+;; array that is element by element equal (in some sense of the word) to the
+;; IMA.  This might entail no work at all, i.e. you are not performing any
+;; emulated index mappings, or it may entail a complete copying of the array.
+;; It also allows for transforming between possible IMA representations, such as
+;; from an array to nested lists or a GSL matrix.  Since this can return you the
+;; same instance, it is helpful to have a <<make-ima>> method which gaurantees
+;; that the memory will be freshly allocated (but the contents not copied, for
+;; copying, see <<copy-ima>>).
 
 ;;; Index mapping
 
@@ -113,26 +106,30 @@
     (apply #'imref (data-of ima) (funcall (the function (map-of ima)) idx)) )
   (defmethod (setf imref) (val (ima index-mapped-array) &rest idx)
     "Set the value of IMA at indices IDX to value VAL."
-    (setf (apply #'imref (data-of ima) (funcall (the function (map-of ima)) idx)) val) ))
+    (setf (apply #'imref (data-of ima)
+                 (funcall (the function (map-of ima)) idx) )
+          val )))
 
-;; @{\em Note:} If you are using your IMA in a functional way with <<immod>>,
-;; you should probably not be using <<(setf imref)>>.  <<(setf imref)>> changes
-;; the original data, <<immod>> returns a new structure and makes no promises on
-;; whether structure is shared or not.  You could imagine that you might get
-;; something back from <<immod>> that shares part of it's structure with the
-;; underlying data.  Then when you set, it might be changing the original data,
-;; or not.  When you look at that orignial array, it is very likely that it has
-;; been corrupted.
+;; @{\em Note:} If you are using your IMA in a functional way with <<(modf
+;; imref)>>, you should probably not be using <<(setf imref)>>.  <<(setf
+;; imref)>> changes the original data, <<(modf imref)>> returns a new structure
+;; and makes no promises on whether structure is shared or not.  You could
+;; imagine that you might get something back from <<(modf imref)>> that shares
+;; part of it's structure with the underlying data.  Then when you set, it might
+;; be changing the original data, or not.  When you look at that orignial array,
+;; it is very likely that it has been corrupted.
 
-;; <<immod>> is the analog of the function <<(setf imref)>>.  It returns a new
-;; IMA with the given, single element changes to a new value.  Using Modf, we
-;; can define methods that modify general map places, like <<column-vector>> for
-;; instance.
+;; The function <<(modf imref)>> is the analog of the function <<(setf imref)>>.
+;; It returns a new IMA with the given, single element changes to a new value.
+;; Using Modf, we can define methods that modify general map places, like
+;; <<column-vector>> for instance.
 
-(defmethod immod (val (ima index-mapped-array) &rest idx)
+(define-modf-method imref 1 (val (ima index-mapped-array) &rest idx)
   "This is an index-mapped-array strcuture, so we will pass the work down to the
 underlying structure."
-  (map-indices (apply #'immod val (data-of ima) (funcall (map-of ima) idx))
+  (map-indices (modf (apply #'imref (modf-eval (data-of ima))
+                            (funcall (map-of ima) idx) )
+                     val )
                (map-of ima)
                (dims-of ima)
                :map-desc (map-desc-of ima) ))
@@ -170,11 +167,10 @@ quite often)."
 
 ;; @\section{Common (built in) maps}
 
-;; @This is an ugly, fragile macro that declares generic imref and
-;; (setf imref) and any nicer wrapper functions.  {\bf NOTE:} Function
-;; bodies must be explicit, and must contain nothing but a call to the
-;; underlying mapping method.  Some variable capture possibilties
-;; which need to be fixed.
+;; @This is an ugly, fragile macro that declares generic imref and (setf imref)
+;; and any nicer wrapper functions.  {\bf NOTE:} Function bodies must be
+;; explicit, and must contain nothing but a call to the underlying mapping
+;; method.  Some variable capture possibilties which need to be fixed.
 
 (defmacro def-generic-map ((defmethod name (&rest args) &body body)
                            &rest convenience-functions )
@@ -296,9 +292,8 @@ PERMUTATION."
 b_ji."
       (permute-indices ima '(1 0)) ))
 
-;; @<<self-map>> is a trick to allow you to {\em setf} entire IMA
-;; contents.  {\em contents-of} is a more plain english desciptive
-;; name of the facility.
+;; @<<self-map>> is a trick to allow you to {\em setf} entire IMA contents.
+;; {\em contents-of} is a more plain english desciptive name of the facility.
 
 ;;<<>>=
 (def-generic-map
@@ -313,11 +308,10 @@ array."
 
 ;; @\section{Unmapping and converting}
 
-;; While <<imref>> is a very versatile method, it is common for users
-;; to want send their data to code that isn't written with <<imref>>.
-;; In order to facilitate this, we have the idea of {\em unmapping},
-;; or getting an instance of data that is ``equivalent'', but without
-;; any emulated mappings.
+;; While <<imref>> is a very versatile method, it is common for users to want
+;; send their data to code that isn't written with <<imref>>.  In order to
+;; facilitate this, we have the idea of {\em unmapping}, or getting an instance
+;; of data that is ``equivalent'', but without any emulated mappings.
 
 (defmacro def-unmapper (type (ima-sym) &body body)
   "Define a set unmapping routines: one that unmaps given the name of the type,
@@ -342,23 +336,21 @@ until it finds a non-index-mapped-array structure, then unmaps into that."
 
 ;; @\section{Basic Utilities}
 
-;; @It is useful to provide an easy copy mechanism for data
-;; structures, but as many have stated, it is an ill defined problem
-;; in Lisp (and any language except fully functional ones where you
-;; cannot copy).  I.e. If I copy, do I make copies of the elements
-;; (deep copy), or leave them as references?  If you are using lists
-;; as IMA, it is even more complicated; since nested lists are IMAs,
-;; at what point does a copy procedure stop recursing?  We offer a
-;; facility, <<copy-ima>> that leaves elements uncopied, and recurses
-;; lists fully (not really happy about this one, but it is the only
-;; thing that makes sense).
+;; @It is useful to provide an easy copy mechanism for data structures, but as
+;; many have stated, it is an ill defined problem in Lisp (and any language
+;; except fully functional ones where you cannot copy).  I.e. If I copy, do I
+;; make copies of the elements (deep copy), or leave them as references?  If you
+;; are using lists as IMA, it is even more complicated; since nested lists are
+;; IMAs, at what point does a copy procedure stop recursing?  We offer a
+;; facility, <<copy-ima>> that leaves elements uncopied, and recurses lists
+;; fully (not really happy about this one, but it is the only thing that makes
+;; sense).
 
-;; Even simpler, it is nice to provide a way of producing other IMAs
-;; that use the same underlying data structure.  This is important
-;; since a user that has picked a particular underlying data format
-;; (or one that has gone with some default) doesn't want to incurr
-;; penalties of converting between formats.  For this, we offer
-;; <<make-ima>>.
+;; Even simpler, it is nice to provide a way of producing other IMAs that use
+;; the same underlying data structure.  This is important since a user that has
+;; picked a particular underlying data format (or one that has gone with some
+;; default) doesn't want to incurr penalties of converting between formats.  For
+;; this, we offer <<make-ima>>.
 
 
 ;;<<>>=
@@ -370,19 +362,18 @@ until it finds a non-index-mapped-array structure, then unmaps into that."
                   (finally (return arr)) )
             dims ))
 
-;; @This is still irksome.  I would like to have the new array more
-;; like the original, including element type for those data structures
-;; that support it.  I can't figure out a nice way to do this: allow
-;; low level work like element types, but allow a fall back high level
-;; interface.
+;; @This is still irksome.  I would like to have the new array more like the
+;; original, including element type for those data structures that support it.
+;; I can't figure out a nice way to do this: allow low level work like element
+;; types, but allow a fall back high level interface.
 
 (defmethod make-ima-like (ima &key &allow-other-keys)
   (error "I don't know how to make an IMA like this one") )
 
 ;; This should work, but doesn't.  For now there is a working version below.
 ;; (defmethod copy-ima (ima)
-;;   "This really doesn't copy, it references the old array.  This is
-;;   useful for functional only IMAs."
+;;   "This really doesn't copy, it references the old array.  This is useful for
+;; functional only IMAs."
 ;;   (let ((new (make-ima ima)))
 ;;     (setf (contents-of new) ima) ))
 

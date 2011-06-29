@@ -3,33 +3,30 @@
 
 ;; @\section{Lists}
 
-;; @{\em Warning:} Lists of lists are intepreted as higher
-;; dimensionality IMAs.  To avoid most nonsense, we will just say
-;; right now, having lists as elements is undefined.  Rather it is
-;; well defined what will happen, but it is very easy to get tricked
-;; up if you plan to hold lists in you list based IMAs.  So don't do
-;; it unless you are very sure of what you are doing.  Examples:
+;; @{\em Warning:} Lists of lists are intepreted as higher dimensionality IMAs.
+;; To avoid most nonsense, we will just say right now, having lists as elements
+;; is undefined.  Rather it is well defined what will happen, but it is very
+;; easy to get tricked up if you plan to hold lists in you list based IMAs.  So
+;; don't do it unless you are very sure of what you are doing.  Examples:
 
 ;; @For that matter, ``ragged'' arrays should also be avoided.
 
-;; @Here we have our nested list interface for IMA.  Understand that
-;; it is provided here because lists are so common, but this is far
-;; from an efficient data structure for an array (think random access
-;; in linear time, ugh).  I light of this, I didn't really try to make
-;; this the best it can be, so it is probably very slow, so don't use
-;; it for calculations.  One thing I tried very hard to do is to make
-;; it easy to convert between underlying data structures, so convert
-;; to something else!
+;; @Here we have our nested list interface for IMA.  Understand that it is
+;; provided here because lists are so common, but this is far from an efficient
+;; data structure for an array (think random access in linear time, ugh).  I
+;; light of this, I didn't really try to make this the best it can be, so it is
+;; probably very slow, so don't use it for calculations.  One thing I tried very
+;; hard to do is to make it easy to convert between underlying data structures,
+;; so convert to something else!
 
-;; @That being said, it was a surprise to me when I found out that you
-;; might not notice the linear time versus constant time difference.
-;; If you had an IMA of ~50 elements, you might expect random access
-;; on that IMA as a list to be ~25 times slower than on the array.  In
-;; reality (SBCL), it is around 25% percent slower, or 1.25 times
-;; slower, a far cry from 25.  Why is this?  I don't know.  Perhaps
-;; SBCL is very good at compiling this down to efficient code.  More
-;; likely, <<imref>> needs optimizing (doing this with <<aref>> runs
-;; about 10 times faster).
+;; @That being said, it was a surprise to me when I found out that you might not
+;; notice the linear time versus constant time difference.  If you had an IMA of
+;; ~50 elements, you might expect random access on that IMA as a list to be ~25
+;; times slower than on the array.  In reality (SBCL), it is around 25% percent
+;; slower, or 1.25 times slower, a far cry from 25.  Why is this?  I don't know.
+;; Perhaps SBCL is very good at compiling this down to efficient code.  More
+;; likely, <<imref>> needs optimizing (doing this with <<aref>> runs about 10
+;; times faster).
 
 (defmethod ima-dimension ((ima cons) axis)
   (length (n-times axis #'car ima)) )
@@ -52,12 +49,17 @@
                  (set-spot (nth (car idx) list) (cdr idx)) )))
     (set-spot ima idx) ))
 
-(defmethod immod (val (ima list) &rest idx)
-  (if (and (null (cdr idx)) (eql (car idx) 0))
-      (cons val (cdr ima))
-      (let ((new (copy-ima ima)))
-        (setf (apply #'imref new idx) val)
-        new )))
+(defun modf-list (new-val lst idx)
+  (if idx
+      (if (eql (first idx) 0)
+          (cons (modf-list new-val (first lst) (rest idx))
+                (rest lst) )
+          (cons (first lst)
+                (modf-list new-val (rest lst) (cons (- (first idx) 1) (rest idx)))) )
+      new-val ))
+
+(define-modf-method imref 1 (new-val (lst cons) &rest idx)
+  (modf-list new-val lst idx) )
 
 (def-unmapper list (ima)
   (labels ((builder (list extents)

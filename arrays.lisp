@@ -16,7 +16,7 @@
 (defmethod (setf imref) (val (ima array) &rest idx)
   (setf (apply #'aref ima idx) val) )
 
-(defmethod immod (val (ima array) &rest idx)
+(define-modf-method imref 1 (val (ima array) &rest idx)
   (let ((new (copy-array ima)))
     (setf (apply #'aref new idx) val)
     new ))
