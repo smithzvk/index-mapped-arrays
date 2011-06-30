@@ -120,7 +120,13 @@
        (let ((ima (copy-ima 2d-arr)))
          (setf (submatrix ima 1 1 2 2) '((this is) (testing it)))
          ima )
-       (modf (submatrix 2d-arr 1 1 2 2) '((this is) (testing it))) )))
+       (modf (submatrix 2d-arr 1 1 2 2) '((this is) (testing it))) ))
+  ;; Nested accessors
+  (is (compare-imas-by-element
+       (let ((ima (copy-ima 2d-arr)))
+         (setf (column-vector (submatrix ima 1 1) 0) '(a b))
+         ima )
+       (modf (column-vector (submatrix 2d-arr 1 1) 0) '(a b)) )))
 
 (defsuite* list-ima)
 
