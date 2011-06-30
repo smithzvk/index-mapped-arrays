@@ -1,6 +1,11 @@
 #!/bin/bash
 
+FASL_CACHE=$HOME/.cache/common-lisp
+
 echo "Test results" > test-results
+
+# ensure we are building everything fresh
+find $FASL_CACHE -name \*index-mapped-arrays -exec rm -r {} \;
 
 if which sbcl
 then
