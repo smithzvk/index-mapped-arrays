@@ -51,3 +51,9 @@
 
 ;; Modf methods
 
+(define-modf-method get-vector 1 (new-val (ima array) n &rest fixed)
+  (let* ((new-array (copy-array ima))
+         (vec (apply #'get-vector new-array n fixed)) )
+    (iter (for el in-ima new-val with-index i)
+      (setf (imref vec i) el) )
+    new-array ))
