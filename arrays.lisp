@@ -49,3 +49,5 @@
 (defmethod get-block ((ima vector) start extent)
   (fsubvec ima (first start) (+ (first start) (first extent))) )
 
+;; Modf methods
+

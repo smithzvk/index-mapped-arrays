@@ -124,7 +124,7 @@
         (get-block (nthcdr first-offset ima) (cons 0 (rest start)) extent) )))
 
 ;;<<>>=
-(defmethod (setf get-block) (new-val (ima cons) start extent)
+(defmethod (setf get-block) ((new-val cons) (ima cons) start extent)
   (let ((dims (ima-dimensions ima))
         (first-offset (first start)) )
     (if (and (= (first extent) (length ima))
@@ -132,3 +132,12 @@
                     (cdr start) (cdr dims) (cdr extent) ))
         (setf (nth first-offset ima) new-val)
         (call-next-method) )))
+
+;; Modf methods
+
+(define-modf-method get-vector 1 ((new-val cons) (ima cons) n &rest fixed)
+  (let ((row-direction (1- (length (ima-dimensions ima)))))
+    (if (= n row-direction)
+        (apply (modf-fn imref) new-val ima fixed)
+        (call-next-method) )))
+
