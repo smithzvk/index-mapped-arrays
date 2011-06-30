@@ -194,9 +194,9 @@ IMREF) method definition."
        (defmethod (setf ,name) (,new-val-sym ,ima ,@args)
          (let ((,mapped-data-sym ,(if (member '&rest args)
                                       (append (list 'apply
-                                                    `(function ,name) ,ima )
+                                                    `(function ,name) ima )
                                               (remove '&rest args) )
-                                      (list* name ,ima args) )))
+                                      (list* name ima args) )))
            (iter (for dest-el in-ima ,mapped-data-sym with-index ,mapped-i-sym)
                  (for el in-ima ,new-val-sym)
                  (setf (apply #'imref ,mapped-data-sym
@@ -209,10 +209,10 @@ IMREF) method definition."
                                    #'identity
                                    (ima-dimensions ,ima) ))
                 (,mapped-data-sym
-                  (self-map ,(if (member '&rest args)
-                                 (append (list 'apply `(function ,name) ima)
-                                         (remove '&rest args) )
-                                 (list* name ima args) )))
+                  ,(if (member '&rest args)
+                       (append (list 'apply `(function ,name) ima)
+                               (remove '&rest args) )
+                       (list* name ima args) ))
                 (ret ima) )
            (iter (for dest-el in-ima ,mapped-data-sym with-index ,mapped-i-sym)
                  (for el in-ima ,new-val-sym)
