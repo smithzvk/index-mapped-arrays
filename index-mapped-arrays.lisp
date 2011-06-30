@@ -181,6 +181,7 @@ quite often)."
 ;; generic modification of maps takes the cake and will require O(N*m) time
 ;; where N is the number of data elements and m is the number of desired changes
 ;; when applied to many things that require a full copy, for instance arrays.
+;; This can be aleviated by speciallizing the modf method, which we do.
 
 (defmacro def-generic-map ((defmethod name (ima &rest args) &body body)
                            &rest convenience-functions )
