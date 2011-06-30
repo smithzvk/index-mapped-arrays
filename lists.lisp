@@ -105,7 +105,7 @@
         (call-next-method) )))
 
 ;;<<>>=
-(defmethod (setf get-vector) (new-val (ima cons) n &rest fixed)
+(defmethod (setf get-vector) ((new-val cons) (ima cons) n &rest fixed)
   (let ((row-direction (1- (length (ima-dimensions ima)))))
     (if (= n row-direction)
         (apply #'(setf imref) new-val ima fixed)
