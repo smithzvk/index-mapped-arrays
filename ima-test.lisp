@@ -14,6 +14,13 @@
   (list-tests)
   (array-tests) )
 
+(deftest unmapping-tests (ima)
+  (is (typep (make-ima-like ima) (type-of ima))) )
+
+(deftest make-ima-like-tests (ima)
+  (is (typep (unmap-into 'list ima) 'list))
+  (is (typep (unmap-into 'array ima) 'array)) )
+
 (deftest modf-test-simple ()
   ;; vector
   (is (equal '(1 2 t 4 5) (modf (imref (modf-eval '(1 2 3 4 5)) 2) t)))
@@ -143,6 +150,8 @@ returned rather than mapped via the more general mechanism."
   (is (typep (get-block (row-vector list-array 1) '(1) '(2)) 'cons)) )
 
 (deftest list-tests ()
+  (unmapping-tests *list-ima*)
+  (make-ima-like-tests *list-ima*)
   (mapping-tests *list-ima*)
   (list-smart-mapping *list-ima*)
   (modf-test *list-ima*)
@@ -159,9 +168,11 @@ underlying data format supports it.  E.g. a list IMA's row vectors are just
 returned rather than mapped via the more general mechanism."
   (is (typep array-ima 'array)
       "You passed some to array-smart-mapping that is not an array IMA" )
-  (is (typep (row-vector array-ima 1) 'array)) ) 
+  (is (typep (row-vector array-ima 1) 'array)) )
 
 (deftest array-tests ()
+  (unmapping-tests *array-ima*)
+  (make-ima-like-tests *array-ima*)
   (mapping-tests *array-ima*)
   (array-smart-mapping *array-ima*)
   (modf-test *array-ima*)
