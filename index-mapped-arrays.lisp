@@ -241,7 +241,7 @@ IMREF) method definition."
       (map-indices ima (/. (idx) (append (subseq idx 0 n) (list val) (subseq idx n)))
                    (let ((count -1))
                      (remove-if (/. (_) (= n (incf count))) (ima-dimensions ima)) )
-                   :map-desc (list :proj n val) )))
+                   :map-desc (list :slice n val) )))
 
 ;;<<>>=
 (def-generic-map
