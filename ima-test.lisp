@@ -10,11 +10,11 @@
 (defsuite* ima-test)
 
 (deftest run-tests ()
-  (modf-test)
+  (modf-test-simple)
   (list-tests)
   (array-tests) )
 
-(deftest modf-test ()
+(deftest modf-test-simple ()
   ;; vector
   (is (equal '(1 2 t 4 5) (modf (imref (modf-eval '(1 2 3 4 5)) 2) t)))
   ;; matrix
@@ -92,6 +92,36 @@
     (is (equal (imref 2d-arr 1 1) (imref sub-row-vec 0)))
     (is (equal (imref 2d-arr 1 1) (imref sub-col-vec 0))) ))
 
+(deftest modf-test (2d-arr)
+  ;; row-vectors
+  (is (compare-imas-by-element
+       (let ((ima (copy-ima 2d-arr)))
+         (setf (row-vector ima 1) '(this is test))
+         ima )
+       (modf (row-vector 2d-arr 1) '(this is test)) ))
+  (is (compare-imas-by-element
+       (let ((ima (copy-ima 2d-arr)))
+         (setf (row-vector ima 1) #(this is test))
+         ima )
+       (modf (row-vector 2d-arr 1) #(this is test)) ))
+  ;; column-vectors
+  (is (compare-imas-by-element
+       (let ((ima (copy-ima 2d-arr)))
+         (setf (column-vector ima 1) '(this is test))
+         ima )
+       (modf (column-vector 2d-arr 1) '(this is test)) ))
+  (is (compare-imas-by-element
+       (let ((ima (copy-ima 2d-arr)))
+         (setf (column-vector ima 1) #(this is test))
+         ima )
+       (modf (column-vector 2d-arr 1) #(this is test)) ))
+  ;; blocks
+  (is (compare-imas-by-element
+       (let ((ima (copy-ima 2d-arr)))
+         (setf (submatrix ima 1 1 2 2) '((this is) (testing it)))
+         ima )
+       (modf (submatrix 2d-arr 1 1 2 2) '((this is) (testing it))) )))
+
 (defsuite* list-ima)
 
 (defparameter *list-ima* '((1 2 3) (4 5 6) (7 8 9)))
@@ -109,6 +139,7 @@ returned rather than mapped via the more general mechanism."
 (deftest list-tests ()
   (mapping-tests *list-ima*)
   (list-smart-mapping *list-ima*)
+  (modf-test *list-ima*)
   (mutation-test *list-ima*) )
 
 
@@ -127,4 +158,5 @@ returned rather than mapped via the more general mechanism."
 (deftest array-tests ()
   (mapping-tests *array-ima*)
   (array-smart-mapping *array-ima*)
+  (modf-test *array-ima*)
   (mutation-test *array-ima*) )

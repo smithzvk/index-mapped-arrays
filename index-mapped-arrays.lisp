@@ -43,7 +43,7 @@
 ;; method combination, but it is beyond my ability.  So as it is, I specialize
 ;; on class <<index-mapped-array>>, and that calls the method of the underlying
 ;; data type.  Methods that behave this way are <<imref>>, <<unmap-into>>, and
-;; <<make-ima>>.
+;; <<make-ima-like>>.
 
 ;; @\subsection{Building your own IMA}
 
@@ -54,8 +54,8 @@
 ;; <<ima-dimension>>, <<imref>>, <<(setf imref)>> if you want to set elements,
 ;; Modf functions (which I'll refer to as <<(modf imref)>>) if you want to
 ;; provide a functional modification method, and a set of <<unmap-into>> methods
-;; and <make-ima>> methods.  It sounds like a lot, but it really isn't.  Some
-;; methods can be omitted with decreased functionality.
+;; and <make-ima-like>> methods.  It sounds like a lot, but it really isn't.
+;; Some methods can be omitted with decreased functionality.
 
 ;; @The functions <<ima-dimension>>, <<ima-dimensions>>, and <<imref>> are
 ;; necessary to hook your data structure into the generic interface.  They are
@@ -74,9 +74,9 @@
 ;; emulated index mappings, or it may entail a complete copying of the array.
 ;; It also allows for transforming between possible IMA representations, such as
 ;; from an array to nested lists or a GSL matrix.  Since this can return you the
-;; same instance, it is helpful to have a <<make-ima>> method which gaurantees
-;; that the memory will be freshly allocated (but the contents not copied, for
-;; copying, see <<copy-ima>>).
+;; same instance, it is helpful to have a <<make-ima-like>> method which
+;; gaurantees that the memory will be freshly allocated (but the contents not
+;; copied, for copying, see <<copy-ima>>).
 
 ;;; Index mapping
 
@@ -172,27 +172,48 @@ quite often)."
 ;; explicit, and must contain nothing but a call to the underlying mapping
 ;; method.  Some variable capture possibilties which need to be fixed.
 
-(defmacro def-generic-map ((defmethod name (&rest args) &body body)
+(defmacro def-generic-map ((defmethod name (ima &rest args) &body body)
                            &rest convenience-functions )
   "Define a generic map which includes an IMREF method definition and a \(SETF
 IMREF) method definition."
   (declare (ignore defmethod))
-  (with-gensyms (mapped-data-sym mapped-i-sym setf-new-val-sym)
+  (with-gensyms (mapped-data-sym mapped-i-sym new-val-sym)
     `(progn
-       (defmethod ,name (,@args)
+       (defmethod ,name (,ima ,@args)
          ,@body )
-       (defmethod (setf ,name) (,setf-new-val-sym ,@args)
+       (defmethod (setf ,name) (,new-val-sym ima ,@args)
          (let ((,mapped-data-sym ,(if (member '&rest args)
-                                      (append (list 'apply `(function ,name))
+                                      (append (list 'apply
+                                                    `(function ,name) ima )
                                               (remove '&rest args) )
-                                      (cons name args) )))
+                                      (list* name ima args) )))
            (iter (for dest-el in-ima ,mapped-data-sym with-index ,mapped-i-sym)
-                 (for el in-ima ,setf-new-val-sym)
+                 (for el in-ima ,new-val-sym)
                  (setf (apply #'imref ,mapped-data-sym
                               (nd-index ,mapped-i-sym
                                         (ima-dimensions ,mapped-data-sym) ))
                        el ))
-           ,setf-new-val-sym ))
+           ,new-val-sym ))
+       (define-modf-method ,name 1 (,new-val-sym ,ima ,@args)
+         (let* ((,ima (map-indices ,ima
+                                   #'identity
+                                   (ima-dimensions ,ima) ))
+                (,mapped-data-sym
+                  (self-map ,(if (member '&rest args)
+                                 (append (list 'apply `(function ,name) ima)
+                                         (remove '&rest args) )
+                                 (list* name ima args) )))
+                (ret ima) )
+           (iter (for dest-el in-ima ,mapped-data-sym with-index ,mapped-i-sym)
+                 (for el in-ima ,new-val-sym)
+             (setf ret
+                   (modf (apply
+                          #'imref ret
+                          (funcall (map-of ,mapped-data-sym)
+                                   (nd-index ,mapped-i-sym
+                                             (ima-dimensions ,mapped-data-sym) ) ))
+                         el )))
+           ret ))
        ,@(iter (for (defun conv-name conv-args . conv-body) in convenience-functions)
                (collecting
                 (destructuring-bind (doc-string body)
@@ -201,12 +222,16 @@ IMREF) method definition."
                         (list nil conv-body) )
                   (cond ((= 1 (length body))
                          `(progn (defun ,conv-name ,conv-args ,@doc-string ,@body)
-                                 (defun (setf ,conv-name) ,(cons setf-new-val-sym
+                                 (defun (setf ,conv-name) ,(cons new-val-sym
                                                             conv-args )
                                    ,@doc-string
-                                   (setf ,@body ,setf-new-val-sym) )))
+                                   (setf ,@body ,new-val-sym) )
+                                 (define-modf-function ,conv-name 1
+                                     ,(cons new-val-sym conv-args)
+                                   ,@doc-string
+                                   (modf ,@body ,new-val-sym) )))
                         (t
-                         (warn "Not creating a SETF function.  In order to create a SETF function, your convenience function bodies can only be a single form which is usable as a place.")
+                         (warn "Not creating a SETF or MODF function.  In order to create a SETF function, your convenience function bodies can only be a single form which is usable as a place.")
                          `(defun ,conv-name ,conv-args ,@doc-string ,@body) ))))))))
 
 ;;<<>>=
@@ -350,17 +375,17 @@ until it finds a non-index-mapped-array structure, then unmaps into that."
 ;; the same underlying data structure.  This is important since a user that has
 ;; picked a particular underlying data format (or one that has gone with some
 ;; default) doesn't want to incurr penalties of converting between formats.  For
-;; this, we offer <<make-ima>>.
+;; this, we offer <<make-ima-like>>.
 
 
 ;;<<>>=
-(defmethod make-ima ((ima index-mapped-array) &key dims)
+(defmethod make-ima-like ((ima index-mapped-array) &key dims)
   "Make an IMA with the same base type as the one given."
-  (make-ima (iter (initially (setf arr ima))
-                  (while (typep arr 'index-mapped-array))
-                  (for arr = (data-of arr))
-                  (finally (return arr)) )
-            dims ))
+  (make-ima-like (iter (initially (setf arr ima))
+                   (while (typep arr 'index-mapped-array))
+                   (for arr = (data-of arr))
+                   (finally (return arr)) )
+                 :dims dims ))
 
 ;; @This is still irksome.  I would like to have the new array more like the
 ;; original, including element type for those data structures that support it.
@@ -380,7 +405,7 @@ until it finds a non-index-mapped-array structure, then unmaps into that."
 ;;<<>>=
 (defmethod copy-ima (ima)
   "This is the fallback IMA copy method."
-  (let ((new (make-ima ima)))
+  (let ((new (make-ima-like ima)))
     (iter (for el1 in-ima ima)
           (for i from 0)
           (setf (ima-flat-ref new i) el1) )
