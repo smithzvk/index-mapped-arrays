@@ -172,6 +172,16 @@ quite often)."
 ;; explicit, and must contain nothing but a call to the underlying mapping
 ;; method.  Some variable capture possibilties which need to be fixed.
 
+;; @Here we define a generic way to create maps, a generic way to set the data
+;; in the underlying data structure that is referenced by the map, and a generic
+;; way to make a new instance of the IMA with given changes to the data
+;; referenced by the map.  Each of these generic features are in essence
+;; inefficient.  The mapping requires an extra function evaluation.  The generic
+;; setf of a map requires access via imref, which is known to be slow.  The
+;; generic modification of maps takes the cake and will require O(N*m) time
+;; where N is the number of data elements and m is the number of desired changes
+;; when applied to many things that require a full copy, for instance arrays.
+
 (defmacro def-generic-map ((defmethod name (ima &rest args) &body body)
                            &rest convenience-functions )
   "Define a generic map which includes an IMREF method definition and a \(SETF
