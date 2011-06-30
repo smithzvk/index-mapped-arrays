@@ -24,7 +24,7 @@
                          (pprint-newline (if (ima-dimension array 0) :linear :fill) stream) )
                        (if (= 1 (length (ima-dimensions array)))
                            (format stream "~A" (imref array i))
-                           (output-guts stream (get-projection array 0 i)) )))))
+                           (output-guts stream (get-slice array 0 i)) )))))
            (output-guts stream array) ))))
 
 ;; @\section{Reading}
