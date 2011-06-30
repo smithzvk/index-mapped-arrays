@@ -1,0 +1,24 @@
+
+* Index Mapped Arrays
+
+The original goal of Index Mapped Arrays was at first to ease interaction with
+arrays.  It quickly generalized to a generic, versatile interface to any data
+that could represent an array of data.
+
+** Examples
+
+
+
+** License
+
+3-clause BSD.
+
+** Author
+
+Zach Kost-Smith <zachkostsmith@gmail.com>
+
+** Known issues
+
+In CMUCL, you cannot (modf (get-block ...) ...).  This is because Alexandria's
+copy-array function doesn't work right on CMUCL.  For evidence, try (copy-array
+(copy-array #2A((1 2) (3 4)))).
