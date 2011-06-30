@@ -181,12 +181,12 @@ IMREF) method definition."
     `(progn
        (defmethod ,name (,ima ,@args)
          ,@body )
-       (defmethod (setf ,name) (,new-val-sym ima ,@args)
+       (defmethod (setf ,name) (,new-val-sym ,ima ,@args)
          (let ((,mapped-data-sym ,(if (member '&rest args)
                                       (append (list 'apply
-                                                    `(function ,name) ima )
+                                                    `(function ,name) ,ima )
                                               (remove '&rest args) )
-                                      (list* name ima args) )))
+                                      (list* name ,ima args) )))
            (iter (for dest-el in-ima ,mapped-data-sym with-index ,mapped-i-sym)
                  (for el in-ima ,new-val-sym)
                  (setf (apply #'imref ,mapped-data-sym
