@@ -213,7 +213,7 @@ IMREF) method definition."
                                    (nd-index ,mapped-i-sym
                                              (ima-dimensions ,mapped-data-sym) ) ))
                          el )))
-           ret ))
+           (data-of ret) ))
        ,@(iter (for (defun conv-name conv-args . conv-body) in convenience-functions)
                (collecting
                 (destructuring-bind (doc-string body)
