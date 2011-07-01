@@ -16,5 +16,7 @@
            #:make-ima-like #:copy-ima
            ;; Iterate extensions
            #:in-column-vectors-of #:in-row-vectors-of
-           #:in-ima ))
+           #:in-ima
+           ;; Mapping (like mapcar mapping)
+           #:map-ima ))
 
