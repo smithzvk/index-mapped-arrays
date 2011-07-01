@@ -214,7 +214,7 @@ IMREF) method definition."
                        (append (list 'apply `(function ,name) ima)
                                (remove '&rest args) )
                        (list* name ima args) ))
-                (ret ima) )
+                (ret ,ima) )
            (iter (for dest-el in-ima ,mapped-data-sym with-index ,mapped-i-sym)
                  (for el in-ima ,new-val-sym)
              (setf ret
@@ -244,6 +244,22 @@ IMREF) method definition."
                         (t
                          (warn "Not creating a SETF or MODF function.  In order to create a SETF function, your convenience function bodies can only be a single form which is usable as a place.")
                          `(defun ,conv-name ,conv-args ,@doc-string ,@body) ))))))))
+
+;; @<<self-map>> is a trick to allow you to {\em setf} entire IMA contents.
+;; {\em contents-of} is a more plain english desciptive name of the facility.
+
+;;<<>>=
+(def-generic-map
+    (defmethod self-map (ima)
+      "Return an identity map of the IMA.  Useful if you want to SETF an entire
+array."
+      ima )
+    (defun contents-of (ima)
+      "Return an identity map of the IMA.  Useful if you want to SETF an entire
+array."
+      (self-map ima) ))
+
+;; @\section{Index maps that reduce complexity}
 
 ;;<<>>=
 (def-generic-map
@@ -328,19 +344,90 @@ PERMUTATION."
 b_ji."
       (permute-indices ima '(1 0)) ))
 
-;; @<<self-map>> is a trick to allow you to {\em setf} entire IMA contents.
-;; {\em contents-of} is a more plain english desciptive name of the facility.
+;; @\section{Index maps that increase complexity}
 
-;;<<>>=
+;; <<>>=
 (def-generic-map
-    (defmethod self-map (ima)
-      "Return an identity map of the IMA.  Useful if you want to SETF an entire
-array."
-      ima )
-    (defun contents-of (ima)
-      "Return an identity map of the IMA.  Useful if you want to SETF an entire
-array."
-      (self-map ima) ))
+    (defmethod add-index (ima n)
+      (map-indices ima
+                   (/. (idx) (list-remove-at n idx))
+                   (list-insert-at n 1 (ima-dimensions ima)) )))
+
+;; Only works on the last index
+;; <<>>=
+(def-generic-map
+    (defmethod raise-dimensionality (ima on-index &rest extent)
+      (unless (eql on-index (- (length (ima-dimensions ima)) 1))
+        (error "This only works on the last index of the array, for now.") )
+      (let* ((subspace-dims (cons (/ (nth on-index (ima-dimensions ima))
+                                     (apply #'* extent) )
+                                  extent ))
+             (new-dims (append (subseq (ima-dimensions ima) 0 on-index)
+                               subspace-dims )))
+        (map-indices
+         ima
+         (/. (idx)
+            (append
+             (subseq idx 0 on-index)
+             (list (linear-index (subseq idx on-index (1+ (length extent)))
+                                 subspace-dims ))))
+         new-dims )))
+    (defun group-by (ima &rest extent)
+      (apply #'raise-dimensionality ima 0 extent) ))
+
+;; @\subsection{Grouping IMAs}
+
+;; @Inevitably, we find that we will want to combine two or more IMAs into one.
+;; For instance, if we have a spanning set of vectors, we might want to form a
+;; matrix out of them.  This can be achieved via <<group-imas>>.  This mapping
+;; isn't really a mapping at all, in that it violates our design of accessing a
+;; datastructure using a list of integers.  Instead it returns a new object of
+;; type <<ima-group>> that hold a conglomeration of several IMAs.
+
+;; <<>>=
+(modf-def:defclass ima-group ()
+  ((imas :accessor imas-of :initarg :imas)
+   (index-placement :accessor index-placement-of :initarg :index-placement) ))
+
+(defmethod print-object ((array ima-group) stream)
+  (cond (*print-readably*
+         (print (unmap-into 'array array)) )
+        (t (funcall (formatter "#~DD-IMA") stream (length (ima-dimensions array)))
+         (labels ((output-guts (stream array)
+                    (pprint-logical-block
+                        (stream nil :prefix "(" :suffix ")")
+                      (dotimes (i (ima-dimension array 0))
+                        (when (not (= i 0))
+                          (write-char #\Space stream)
+                          (pprint-newline (if (ima-dimension array 0) :linear :fill) stream) )
+                        (if (= 1 (length (ima-dimensions array)))
+                            (format stream "~A" (imref array i))
+                            (output-guts stream (get-slice array 0 i)) )))))
+           (output-guts stream array) ))))
+
+(defmethod ima-dimensions ((ima ima-group))
+  (list-insert-at (index-placement-of ima)
+                  (ima-dimension (imas-of ima) 0)
+                  (ima-dimensions (imref (imas-of ima) 0)) ))
+
+(defmethod imref ((ima ima-group) &rest idx)
+  (apply #'imref (imref (imas-of ima) (nth (index-placement-of ima) idx))
+         (list-remove-at (index-placement-of ima) idx)) )
+(defmethod (setf imref) (new-val (ima ima-group) &rest idx)
+  (setf (apply #'imref (imref (imas-of ima) (nth (index-placement-of ima) idx))
+               (list-remove-at (index-placement-of ima) idx))
+        new-val ))
+(define-modf-method imref 1 (new-val (ima ima-group) &rest idx)
+  (setf (apply #'imref (imref (imas-of ima) (nth (index-placement-of ima) idx))
+               (list-remove-at (index-placement-of ima) idx))
+        new-val ))
+
+;; <<>>=
+(def-generic-map
+    (defmethod group-imas (imas &optional (on-index 0))
+      (make-instance 'ima-group
+                     :imas imas
+                     :index-placement on-index )))
 
 ;; @\section{Unmapping and converting}
 
@@ -426,13 +513,13 @@ until it finds a non-index-mapped-array structure, then unmaps into that."
 ;; @\section{Mapping}
 
 ;; <<>>=
-(defun map-ima (fn ima &rest more-imas)
-  "Like MAPCAR, but for IMAs of arbitrary dimensionality.  The IMAs need to
-match in dimensionality."
-  (let ((ret-arr (make-ima-like ima)))
-    (iter (for el in-ima ima ima-index i)
-      (setf (ima-flat-ref ret-arr i)
-            (apply fn (cons el (mapcar (lambda (x) (ima-flat-ref x i)) more-imas))) ))
-    ret-arr ))
+;; (defun map-ima (fn ima &rest more-imas)
+;;   "Like MAPCAR, but for IMAs of arbitrary dimensionality.  The IMAs need to
+;; match in dimensionality."
+;;   (let ((ret-arr (make-ima-like ima)))
+;;     (iter (for el in-ima ima ima-index i)
+;;       (setf (ima-flat-ref ret-arr i)
+;;             (apply fn (cons el (mapcar (lambda (x) (ima-flat-ref x i)) more-imas))) ))
+;;     ret-arr ))
 
 ;; @@ printer.lisp
