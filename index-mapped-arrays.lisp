@@ -403,23 +403,15 @@ until it finds a non-index-mapped-array structure, then unmaps into that."
 ;; I can't figure out a nice way to do this: allow low level work like element
 ;; types, but allow a fall back high level interface.
 
+;; <<>>=
 (defmethod make-ima-like (ima &key &allow-other-keys)
   (error "I don't know how to make an IMA like this one") )
 
-;; This should work, but doesn't.  For now there is a working version below.
-;; (defmethod copy-ima (ima)
-;;   "This really doesn't copy, it references the old array.  This is useful for
-;; functional only IMAs."
-;;   (let ((new (make-ima ima)))
-;;     (setf (contents-of new) ima) ))
-
-;;<<>>=
+;; <<>>=
 (defmethod copy-ima (ima)
-  "This is the fallback IMA copy method."
+  "Copy any IMA."
   (let ((new (make-ima-like ima)))
-    (iter (for el1 in-ima ima)
-          (for i from 0)
-          (setf (ima-flat-ref new i) el1) )
+    (setf (contents-of new) ima)
     new ))
 
 ;; @\section{Backends}
