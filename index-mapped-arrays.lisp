@@ -390,20 +390,7 @@ b_ji."
    (index-placement :accessor index-placement-of :initarg :index-placement) ))
 
 (defmethod print-object ((array ima-group) stream)
-  (cond (*print-readably*
-         (print (unmap-into 'array array)) )
-        (t (funcall (formatter "#~DD-IMA") stream (length (ima-dimensions array)))
-         (labels ((output-guts (stream array)
-                    (pprint-logical-block
-                        (stream nil :prefix "(" :suffix ")")
-                      (dotimes (i (ima-dimension array 0))
-                        (when (not (= i 0))
-                          (write-char #\Space stream)
-                          (pprint-newline (if (ima-dimension array 0) :linear :fill) stream) )
-                        (if (= 1 (length (ima-dimensions array)))
-                            (format stream "~A" (imref array i))
-                            (output-guts stream (get-slice array 0 i)) )))))
-           (output-guts stream array) ))))
+  (print-ima array stream) )
 
 (defmethod ima-dimensions ((ima ima-group))
   (list-insert-at (index-placement-of ima)
