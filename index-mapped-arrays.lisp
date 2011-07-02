@@ -372,7 +372,7 @@ b_ji."
              (list (linear-index (subseq idx on-index (1+ (length extent)))
                                  subspace-dims ))))
          new-dims )))
-    (defun group-by (ima &rest extent)
+    (defun group-elements-by (ima &rest extent)
       (apply #'raise-dimensionality ima 0 extent) ))
 
 ;; @\subsection{Grouping IMAs}

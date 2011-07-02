@@ -14,7 +14,7 @@
            #:get-block #:submatrix #:subvector
            #:transpose
            ;; Raising the dimensionality
-           #:add-index #:raise-dimensionality #:group-by
+           #:add-index #:raise-dimensionality #:group-elements-by
            ;; Grouping IMAs
            #:group-imas
            #:unmap #:unmap-into #:def-unmapper
