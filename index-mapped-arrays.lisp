@@ -411,7 +411,7 @@ b_ji."
 
 ;; <<>>=
 (def-generic-map
-    (defmethod group-imas (imas &optional (on-index 0))
+    (defmethod group-imas (imas on-index)
       (make-instance 'ima-group
                      :imas imas
                      :index-placement on-index )))
