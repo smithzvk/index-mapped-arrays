@@ -416,6 +416,58 @@ b_ji."
                      :imas imas
                      :index-placement on-index )))
 
+;; <<>>=
+(modf-def:defclass ima-append ()
+  ((imas :accessor imas-of :initarg :imas)
+   (index-placement :accessor index-placement-of :initarg :index-placement) ))
+
+(defmethod print-object ((array ima-append) stream)
+  (print-ima array stream) )
+
+(defun replace-nth (nth list new-val)
+  (if (> nth 0)
+      (cons (car list) (replace-nth (- nth 1) (cdr list) new-val))
+      (cons new-val (cdr list)) ))
+
+(defmethod ima-dimensions ((ima ima-append))
+  (replace-nth (index-placement-of ima)
+               (ima-dimensions (imref (imas-of ima) 0))
+               ;; We need a special case for list imas as they nest
+               ;; transparently, meaning we can't use IN-IMA.
+               (if (consp (imas-of ima))
+                   (iter (for arr in (imas-of ima))
+                     (summing (ima-dimension
+                               arr (index-placement-of ima) )))
+                   (iter (for arr in-ima (imas-of ima))
+                     (summing (ima-dimension
+                               arr (index-placement-of ima) ))))))
+
+(defmethod imref ((ima ima-append) &rest idx)
+  (let* ((app-index (nth (index-placement-of ima) idx))
+         (arr (iter (for arr in (imas-of ima))
+                (finding arr such-that
+                         (< app-index (ima-dimension arr (index-placement-of ima))) )
+                (decf app-index (ima-dimension arr (index-placement-of ima))) )))
+    (apply #'imref arr (replace-nth (index-placement-of ima) idx app-index)) ))
+(defmethod (setf imref) (new-val (ima ima-group) &rest idx)
+  (let* ((app-index (nth (index-placement-of ima) idx))
+         (arr (iter (for arr in (imas-of ima))
+                (finding arr such-that
+                         (< app-index (ima-dimension arr (index-placement-of ima))) )
+                (decf app-index (ima-dimension arr (index-placement-of ima))) )))
+    (setf (apply #'imref arr (replace-nth (index-placement-of ima) idx app-index))
+          new-val )))
+;; (define-modf-method imref 1 (new-val (ima ima-group) &rest idx)
+;;   (setf (apply #'imref (imref (imas-of ima) (nth (index-placement-of ima) idx))
+;;                (list-remove-at (index-placement-of ima) idx))
+;;         new-val ))
+
+(def-generic-map
+    (defmethod append-imas (imas on-index)
+      (make-instance 'ima-append
+                     :index-placement on-index
+                     :imas imas )))
+
 ;; @\section{Unmapping and converting}
 
 ;; While <<imref>> is a very versatile method, it is common for users to want

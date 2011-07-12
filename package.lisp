@@ -17,6 +17,7 @@
            #:add-index #:raise-dimensionality #:group-elements-by
            ;; Grouping IMAs
            #:group-imas
+           #:append-imas
            #:unmap #:unmap-into #:def-unmapper
            #:make-ima-like #:copy-ima
            ;; Iterate extensions
