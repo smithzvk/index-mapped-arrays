@@ -404,10 +404,10 @@ b_ji."
   (setf (apply #'imref (imref (imas-of ima) (nth (index-placement-of ima) idx))
                (list-remove-at (index-placement-of ima) idx))
         new-val ))
-(define-modf-method imref 1 (new-val (ima ima-group) &rest idx)
-  (setf (apply #'imref (imref (imas-of ima) (nth (index-placement-of ima) idx))
-               (list-remove-at (index-placement-of ima) idx))
-        new-val ))
+;; (define-modf-method imref 1 (new-val (ima ima-group) &rest idx)
+;;   (setf (apply #'imref (imref (imas-of ima) (nth (index-placement-of ima) idx))
+;;                (list-remove-at (index-placement-of ima) idx))
+;;         new-val ))
 
 ;; <<>>=
 (def-generic-map
