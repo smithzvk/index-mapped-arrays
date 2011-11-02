@@ -375,6 +375,54 @@ b_ji."
     (defun group-elements-by (ima &rest extent)
       (apply #'raise-dimensionality ima 0 extent) ))
 
+;; @\subsection{Some other useful maps}
+
+;; Now we define a few extremely useful index maps.  Here we define the maps
+;; <<pbc-array>> and <<index-shift>>.  The map <<pbc-array>> wraps indices that
+;; become too large back to zero and indices that become too small (negative)
+;; back to the maximum value.  The map <<index-shift>> which applies a shift to
+;; the indices.
+
+;; I had to include a handful of utilities here.  This should be cleaned up
+;; later (factored into a different file or library).
+
+;;<<>>=
+(defun sign (x)
+  (cond ((< x 0) -1)
+        (t 1) ))
+
+;;<<>>=
+(defun outer-truncate (x &optional (divisor 1))
+  "Find the nearest integer to \(/ X DIVISOR) that is not smaller in magnitude.
+OUTER-TRUNCATE is to TRUNCATE as CEILING in to FLOOR, or something like that."
+  (let ((rat (/ x divisor)))
+    (* (sign rat) (ceiling (abs rat))) ))
+
+;;<<>>=
+(def-generic-map
+    (defmethod pbc-array (ima)
+      (ima::map-indices ima (lambda (idx)
+                              (iter
+                                (for i in idx)
+                                (for extent in (ima-dimensions ima))
+                                (collecting
+                                 (if (< i 0)
+                                     (- i (* extent (outer-truncate i extent)))
+                                     (- i (* extent (floor i extent))) ))))
+                        (ima-dimensions ima) )))
+
+;;<<>>=
+(def-generic-map
+    (defmethod index-shift (ima &rest shifts)
+      (ima::map-indices ima (lambda (idx)
+                              (iter
+                                (for i in idx)
+                                (for shift in shifts)
+                                (collecting
+                                 (- i shift) )))
+                        (ima-dimensions ima) )))
+
+
 ;; @\subsection{Grouping IMAs}
 
 ;; @Inevitably, we find that we will want to combine two or more IMAs into one.

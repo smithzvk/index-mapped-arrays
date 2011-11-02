@@ -24,5 +24,7 @@
            #:in-column-vectors-of #:in-row-vectors-of
            #:in-ima
            ;; Mapping (like mapcar mapping)
-           #:map-ima ))
+           #:map-ima
+           #:pbc-array
+           #:index-shift))
 
