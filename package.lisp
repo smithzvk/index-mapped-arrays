@@ -26,5 +26,7 @@
            ;; Mapping (like mapcar mapping)
            #:map-ima
            #:pbc-array
-           #:index-shift))
+           #:index-shift
+           #:nd-index
+           #:linear-index))
 
