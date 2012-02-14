@@ -13,7 +13,7 @@
   "Print the index mapped ARRAY to STREAM using the pretty printer."
   ;; Apapted from the SBCL printer
   (cond (*print-readably*
-         (print (unmap-into 'array array)) )
+         (print (unmap-into 'array array)))
         (t (funcall (formatter "#~DD-IMA") stream (length (ima-dimensions array)))
          (labels ((output-guts (stream array)
                     (pprint-logical-block
@@ -21,16 +21,16 @@
                      (dotimes (i (ima-dimension array 0))
                        (when (not (= i 0))
                          (write-char #\Space stream)
-                         (pprint-newline (if (ima-dimension array 0) :linear :fill) stream) )
+                         (pprint-newline (if (ima-dimension array 0) :linear :fill) stream))
                        (if (= 1 (length (ima-dimensions array)))
                            (format stream "~A" (imref array i))
-                           (output-guts stream (get-slice array 0 i)) )))))
-           (output-guts stream array) ))))
+                           (output-guts stream (get-slice array 0 i)))))))
+           (output-guts stream array)))))
 
 (defmethod print-object ((array index-mapped-array) stream)
   "Print the index mapped ARRAY to STREAM using the pretty printer."
   ;; Apapted from the SBCL printer
-  (print-ima array stream) )
+  (print-ima array stream))
 
 ;; @\section{Reading}
 

@@ -13,7 +13,7 @@ then
 (ql:quickload :index-mapped-arrays-test)
 (stefil:without-debugging (ima-test:run-tests))
 (with-open-file (out #p"test-results" :if-exists :append :direction :output)
- (format out "sbcl: ~A~%" stefil:*last-test-result*) )
+ (format out "sbcl: ~A~%" stefil:*last-test-result*))
 EOF
 fi
 
@@ -24,7 +24,7 @@ then
 (ql:quickload :index-mapped-arrays-test)
 (stefil:without-debugging (ima-test:run-tests))
 (with-open-file (out #p"test-results" :if-exists :append :direction :output)
- (format out "cmucl: ~A~%" stefil:*last-test-result*) )
+ (format out "cmucl: ~A~%" stefil:*last-test-result*))
 (quit)
 EOF
 fi
@@ -35,7 +35,7 @@ then
 (ql:quickload :index-mapped-arrays-test)
 (stefil:without-debugging (ima-test:run-tests))
 (with-open-file (out #p"test-results" :if-exists :append :direction :output)
- (format out "ccl: ~A~%" stefil:*last-test-result*) )
+ (format out "ccl: ~A~%" stefil:*last-test-result*))
 EOF
 fi
 
@@ -45,7 +45,7 @@ then
 (ql:quickload :index-mapped-arrays-test)
 (stefil:without-debugging (ima-test:run-tests))
 (with-open-file (out #p"test-results" :if-exists :append :direction :output)
- (format out "ccl64: ~A~%" stefil:*last-test-result*) )
+ (format out "ccl64: ~A~%" stefil:*last-test-result*))
 EOF
 fi
 
@@ -55,7 +55,7 @@ then
 (ql:quickload :index-mapped-arrays-test)
 (stefil:without-debugging (ima-test:run-tests))
 (with-open-file (out #p"test-results" :if-exists :append :direction :output)
- (format out "clisp: ~A~%" stefil:*last-test-result*) )
+ (format out "clisp: ~A~%" stefil:*last-test-result*))
 EOF
 fi
 
@@ -65,7 +65,7 @@ then
 (ql:quickload :index-mapped-arrays-test)
 (stefil:without-debugging (ima-test:run-tests))
 (with-open-file (out #p"test-results" :if-exists :append :direction :output)
- (format out "ecl: ~A~%" stefil:*last-test-result*) )
+ (format out "ecl: ~A~%" stefil:*last-test-result*))
 EOF
 fi
 
@@ -75,6 +75,6 @@ then
 (ql:quickload :index-mapped-arrays-test)
 (stefil:without-debugging (ima-test:run-tests))
 (with-open-file (out #p"test-results" :if-exists :append :direction :output)
- (format out "abcl: ~A~%" stefil:*last-test-result*) )
+ (format out "abcl: ~A~%" stefil:*last-test-result*))
 EOF
 fi

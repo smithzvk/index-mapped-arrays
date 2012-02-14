@@ -87,7 +87,7 @@
   ((data :initarg :data :accessor data-of)
    (dims :initarg :dims :accessor dims-of)
    (map-desc :initarg :map-desc :accessor map-desc-of)
-   (map :initarg :map :accessor map-of) ))
+   (map :initarg :map :accessor map-of)))
 
 (defmethod map-desc-of (ima) :raw)
 
@@ -95,20 +95,20 @@
     (declare (optimize (speed 3)))
   (defmethod ima-dimension (ima axis)
     "Return the length of IMA along AXIS."
-    (nth axis (ima-dimensions ima)) )
+    (nth axis (ima-dimensions ima)))
   (defmethod ima-dimensions (ima)
     "Return the extents of the IMA."
-    (dims-of ima) )
+    (dims-of ima))
   (defmethod imref ((ima index-mapped-array) &rest idx)
     "Get the element of IMA at indices IDX."
     (declare (optimize (speed 3) (debug 1) (compilation-speed 0) (safety 1) (space 0))
-             (dynamic-extent idx) )
-    (apply #'imref (data-of ima) (funcall (the function (map-of ima)) idx)) )
+             (dynamic-extent idx))
+    (apply #'imref (data-of ima) (funcall (the function (map-of ima)) idx)))
   (defmethod (setf imref) (val (ima index-mapped-array) &rest idx)
     "Set the value of IMA at indices IDX to value VAL."
     (setf (apply #'imref (data-of ima)
-                 (funcall (the function (map-of ima)) idx) )
-          val )))
+                 (funcall (the function (map-of ima)) idx))
+          val)))
 
 ;; @{\em Note:} If you are using your IMA in a functional way with <<(modf
 ;; imref)>>, you should probably not be using <<(setf imref)>>.  <<(setf
@@ -128,29 +128,29 @@
   "This is an index-mapped-array strcuture, so we will pass the work down to the
 underlying structure."
   (map-indices (modf (apply #'imref (modf-eval (data-of ima))
-                            (funcall (map-of ima) idx) )
-                     val )
+                            (funcall (map-of ima) idx))
+                     val)
                (map-of ima)
                (dims-of ima)
-               :map-desc (map-desc-of ima) ))
+               :map-desc (map-desc-of ima)))
 
 (defmethod ima-flat-ref (ima index)
   "Allows you to access the data of an IMA in a linear fashion.  No guarantees
 are made as to the order in which the elements are ordered \(this may change in
 the future if it becomes benefitial)."
   (apply #'imref ima
-         (nd-index index (ima-dimensions ima)) ))
+         (nd-index index (ima-dimensions ima))))
 
 (defmethod (setf ima-flat-ref) (val ima index)
   "Allows you to set the data of an IMA by referencing the data in a linear
 fashion."
   (setf (apply #'imref ima
-               (nd-index index (ima-dimensions ima)) )
-        val ))
+               (nd-index index (ima-dimensions ima)))
+        val))
 
 (defmethod flat-ima-size (ima)
   "Returns the linear size of an IMA."
-  (apply #'* (ima-dimensions ima)) )
+  (apply #'* (ima-dimensions ima)))
 
 (defvar *simplify* t)
 
@@ -163,7 +163,7 @@ quite often)."
                      :data object
                      :map map
                      :dims dims
-                     :map-desc (list map-desc (map-desc-of object)) )))
+                     :map-desc (list map-desc (map-desc-of object)))))
 
 ;; @\section{Common (built in) maps}
 
@@ -184,37 +184,37 @@ quite often)."
 ;; This can be aleviated by speciallizing the modf method, which we do.
 
 (defmacro def-generic-map ((defmethod name (ima &rest args) &body body)
-                           &rest convenience-functions )
+                           &rest convenience-functions)
   "Define a generic map which includes an IMREF method definition and a \(SETF
 IMREF) method definition."
   (declare (ignore defmethod))
   (with-gensyms (mapped-data-sym mapped-i-sym new-val-sym)
     `(progn
        (defmethod ,name (,ima ,@args)
-         ,@body )
+         ,@body)
        (defmethod (setf ,name) (,new-val-sym ,ima ,@args)
          (let ((,mapped-data-sym ,(if (member '&rest args)
                                       (append (list 'apply
-                                                    `(function ,name) ima )
-                                              (remove '&rest args) )
-                                      (list* name ima args) )))
+                                                    `(function ,name) ima)
+                                              (remove '&rest args))
+                                      (list* name ima args))))
            (iter (for dest-el in-ima ,mapped-data-sym with-index ,mapped-i-sym)
                  (for el in-ima ,new-val-sym)
                  (setf (apply #'imref ,mapped-data-sym
                               (nd-index ,mapped-i-sym
-                                        (ima-dimensions ,mapped-data-sym) ))
-                       el ))
-           ,new-val-sym ))
+                                        (ima-dimensions ,mapped-data-sym)))
+                       el))
+           ,new-val-sym))
        (define-modf-method ,name 1 (,new-val-sym ,ima ,@args)
          (let* ((,ima (map-indices ,ima
                                    #'identity
-                                   (ima-dimensions ,ima) ))
+                                   (ima-dimensions ,ima)))
                 (,mapped-data-sym
                   ,(if (member '&rest args)
                        (append (list 'apply `(function ,name) ima)
-                               (remove '&rest args) )
-                       (list* name ima args) ))
-                (ret ,ima) )
+                               (remove '&rest args))
+                       (list* name ima args)))
+                (ret ,ima))
            (iter (for dest-el in-ima ,mapped-data-sym with-index ,mapped-i-sym)
                  (for el in-ima ,new-val-sym)
              (setf ret
@@ -222,28 +222,28 @@ IMREF) method definition."
                           #'imref ret
                           (funcall (map-of ,mapped-data-sym)
                                    (nd-index ,mapped-i-sym
-                                             (ima-dimensions ,mapped-data-sym) ) ))
-                         el )))
-           (data-of ret) ))
+                                             (ima-dimensions ,mapped-data-sym))))
+                         el)))
+           (data-of ret)))
        ,@(iter (for (defun conv-name conv-args . conv-body) in convenience-functions)
                (collecting
                 (destructuring-bind (doc-string body)
                     (if (stringp (first conv-body))
                         (list (list (first conv-body)) (rest conv-body))
-                        (list nil conv-body) )
+                        (list nil conv-body))
                   (cond ((= 1 (length body))
                          `(progn (defun ,conv-name ,conv-args ,@doc-string ,@body)
                                  (defun (setf ,conv-name) ,(cons new-val-sym
-                                                            conv-args )
+                                                            conv-args)
                                    ,@doc-string
-                                   (setf ,@body ,new-val-sym) )
+                                   (setf ,@body ,new-val-sym))
                                  (define-modf-function ,conv-name 1
                                      ,(cons new-val-sym conv-args)
                                    ,@doc-string
-                                   (modf ,@body ,new-val-sym) )))
+                                   (modf ,@body ,new-val-sym))))
                         (t
                          (warn "Not creating a SETF or MODF function.  In order to create a SETF function, your convenience function bodies can only be a single form which is usable as a place.")
-                         `(defun ,conv-name ,conv-args ,@doc-string ,@body) ))))))))
+                         `(defun ,conv-name ,conv-args ,@doc-string ,@body)))))))))
 
 ;; @<<self-map>> is a trick to allow you to {\em setf} entire IMA contents.
 ;; {\em contents-of} is a more plain english desciptive name of the facility.
@@ -253,11 +253,11 @@ IMREF) method definition."
     (defmethod self-map (ima)
       "Return an identity map of the IMA.  Useful if you want to SETF an entire
 array."
-      ima )
+      ima)
     (defun contents-of (ima)
       "Return an identity map of the IMA.  Useful if you want to SETF an entire
 array."
-      (self-map ima) ))
+      (self-map ima)))
 
 ;; @\section{Index maps that reduce complexity}
 
@@ -267,25 +267,25 @@ array."
       "This reduces the dimensionality, D, to D-1."
       (map-indices ima (/. (idx) (append (subseq idx 0 n) (list val) (subseq idx n)))
                    (let ((count -1))
-                     (remove-if (/. (_) (= n (incf count))) (ima-dimensions ima)) )
-                   :map-desc (list :slice n val) )))
+                     (remove-if (/. (_) (= n (incf count))) (ima-dimensions ima)))
+                   :map-desc (list :slice n val))))
 
 ;;<<>>=
 (def-generic-map
     (defmethod get-vector (ima n &rest fixed)
       "This reduces the dimensionality to 1, i.e. a vector."
       (map-indices ima (/. (idx)
-                          (append (subseq fixed 0 n) idx (subseq fixed n)) )
+                          (append (subseq fixed 0 n) idx (subseq fixed n)))
                    (list (ima-dimension ima n))
-                   :map-desc (list :vec n fixed) ))
+                   :map-desc (list :vec n fixed)))
     (defun column-vector (ima n)
       "Get the column vector of a 2-D array.  The last index is fixed, the index
 of the vector changes the second index on the array."
-      (get-vector ima 0 n) )
+      (get-vector ima 0 n))
     (defun row-vector (ima n)
       "Get the row vector of a 2-D array.  The first index is fixed, the index
 of the vector changes the last index on the array."
-      (get-vector ima 1 n) ))
+      (get-vector ima 1 n)))
 
 ;;<<>>=
 (def-generic-map
@@ -295,9 +295,9 @@ array."
       (map-indices ima (/. (idx)
                           (make-list
                            (length (ima-dimensions ima))
-                           :initial-element (car idx) ))
+                           :initial-element (car idx)))
                    (list (ima-dimension ima 0))
-                   :map-desc :diag )))
+                   :map-desc :diag)))
 
 ;;<<>>=
 (def-generic-map
@@ -305,29 +305,29 @@ array."
       "For 2-D arrays, return the opposite diagonal of the matrix, which crosses
 the matrix diagonal."
       (unless (= (length (ima-dimensions ima)) 2)
-        (error "The cross diagonal is only unique for 2D arrays \(matrices)") )
+        (error "The cross diagonal is only unique for 2D arrays \(matrices)"))
       (map-indices ima (/. (idx)
                           (let ((n (first (ima-dimensions ima))))
-                            (list (- n (car idx) 1) (car idx)) ))
-                   (list (ima-dimension ima 0)) )))
+                            (list (- n (car idx) 1) (car idx))))
+                   (list (ima-dimension ima 0)))))
 
 ;;<<>>=
 (def-generic-map
     (defmethod get-block (ima start extent)
       "Get a sub-block of the array.  This does not change the dimensionality."
       (map-indices ima (/. (idx) (mapcar #'+ start idx)) extent
-                   :map-desc (list :block start extent) ))
+                   :map-desc (list :block start extent)))
     (defun submatrix (ima i0 j0 &optional n m)
       "Get a submatrix of a matrix \(2D array).  Start at I0 and J0 and extend
 for N and M, respectively.  If N or M are omitted, run to the end of the array."
       (get-block ima (list i0 j0)
                  (list (or n (- (ima-dimension ima 0) i0))
-                       (or m (- (ima-dimension ima 1) j0)) )))
+                       (or m (- (ima-dimension ima 1) j0)))))
     (defun subvector (ima start &optional extent)
       "Get a subvector of a vector.  Start at START and extend to for EXTENT
 elements."
       (get-block ima (list start) (list (or extent (- (ima-dimension ima 0)
-                                                      start ))))))
+                                                      start))))))
 
 ;;<<>>=
 (def-generic-map
@@ -338,11 +338,11 @@ PERMUTATION."
       (map-indices ima
                    (/. (idx) (permute-list permutation idx))
                    (permute-list permutation (ima-dimensions ima))
-                   :map-desc (list :perm permutation) ))
+                   :map-desc (list :perm permutation)))
     (defun transpose (ima)
       "Given a 2-D array, A, return an array, B, where the elements a_ij =
 b_ji."
-      (permute-indices ima '(1 0)) ))
+      (permute-indices ima '(1 0))))
 
 ;; @\section{Index maps that increase complexity}
 
@@ -351,29 +351,29 @@ b_ji."
     (defmethod add-index (ima n)
       (map-indices ima
                    (/. (idx) (list-remove-at n idx))
-                   (list-insert-at n 1 (ima-dimensions ima)) )))
+                   (list-insert-at n 1 (ima-dimensions ima)))))
 
 ;; Only works on the last index
 ;; <<>>=
 (def-generic-map
     (defmethod raise-dimensionality (ima on-index &rest extent)
       (unless (eql on-index (- (length (ima-dimensions ima)) 1))
-        (error "This only works on the last index of the array, for now.") )
+        (error "This only works on the last index of the array, for now."))
       (let* ((subspace-dims (cons (/ (nth on-index (ima-dimensions ima))
-                                     (apply #'* extent) )
-                                  extent ))
+                                     (apply #'* extent))
+                                  extent))
              (new-dims (append (subseq (ima-dimensions ima) 0 on-index)
-                               subspace-dims )))
+                               subspace-dims)))
         (map-indices
          ima
          (/. (idx)
             (append
              (subseq idx 0 on-index)
              (list (linear-index (subseq idx on-index (1+ (length extent)))
-                                 subspace-dims ))))
-         new-dims )))
+                                 subspace-dims))))
+         new-dims)))
     (defun group-elements-by (ima &rest extent)
-      (apply #'raise-dimensionality ima 0 extent) ))
+      (apply #'raise-dimensionality ima 0 extent)))
 
 ;; @\subsection{Some other useful maps}
 
@@ -389,14 +389,14 @@ b_ji."
 ;;<<>>=
 (defun sign (x)
   (cond ((< x 0) -1)
-        (t 1) ))
+        (t 1)))
 
 ;;<<>>=
 (defun outer-truncate (x &optional (divisor 1))
   "Find the nearest integer to \(/ X DIVISOR) that is not smaller in magnitude.
 OUTER-TRUNCATE is to TRUNCATE as CEILING in to FLOOR, or something like that."
   (let ((rat (/ x divisor)))
-    (* (sign rat) (ceiling (abs rat))) ))
+    (* (sign rat) (ceiling (abs rat)))))
 
 ;;<<>>=
 (def-generic-map
@@ -408,8 +408,8 @@ OUTER-TRUNCATE is to TRUNCATE as CEILING in to FLOOR, or something like that."
                                 (collecting
                                  (if (< i 0)
                                      (- i (* extent (outer-truncate i extent)))
-                                     (- i (* extent (floor i extent))) ))))
-                        (ima-dimensions ima) )))
+                                     (- i (* extent (floor i extent)))))))
+                        (ima-dimensions ima))))
 
 ;;<<>>=
 (def-generic-map
@@ -419,8 +419,8 @@ OUTER-TRUNCATE is to TRUNCATE as CEILING in to FLOOR, or something like that."
                                 (for i in idx)
                                 (for shift in shifts)
                                 (collecting
-                                 (- i shift) )))
-                        (ima-dimensions ima) )))
+                                 (- i shift))))
+                        (ima-dimensions ima))))
 
 
 ;; @\subsection{Grouping IMAs}
@@ -435,47 +435,47 @@ OUTER-TRUNCATE is to TRUNCATE as CEILING in to FLOOR, or something like that."
 ;; <<>>=
 (modf-def:defclass ima-group ()
   ((imas :accessor imas-of :initarg :imas)
-   (index-placement :accessor index-placement-of :initarg :index-placement) ))
+   (index-placement :accessor index-placement-of :initarg :index-placement)))
 
 (defmethod print-object ((array ima-group) stream)
-  (print-ima array stream) )
+  (print-ima array stream))
 
 (defmethod ima-dimensions ((ima ima-group))
   (list-insert-at (index-placement-of ima)
                   (ima-dimension (imas-of ima) 0)
-                  (ima-dimensions (imref (imas-of ima) 0)) ))
+                  (ima-dimensions (imref (imas-of ima) 0))))
 
 (defmethod imref ((ima ima-group) &rest idx)
   (apply #'imref (imref (imas-of ima) (nth (index-placement-of ima) idx))
-         (list-remove-at (index-placement-of ima) idx)) )
+         (list-remove-at (index-placement-of ima) idx)))
 (defmethod (setf imref) (new-val (ima ima-group) &rest idx)
   (setf (apply #'imref (imref (imas-of ima) (nth (index-placement-of ima) idx))
                (list-remove-at (index-placement-of ima) idx))
-        new-val ))
+        new-val))
 ;; (define-modf-method imref 1 (new-val (ima ima-group) &rest idx)
 ;;   (setf (apply #'imref (imref (imas-of ima) (nth (index-placement-of ima) idx))
 ;;                (list-remove-at (index-placement-of ima) idx))
-;;         new-val ))
+;;         new-val))
 
 ;; <<>>=
 (def-generic-map
     (defmethod group-imas (imas on-index)
       (make-instance 'ima-group
                      :imas imas
-                     :index-placement on-index )))
+                     :index-placement on-index)))
 
 ;; <<>>=
 (modf-def:defclass ima-append ()
   ((imas :accessor imas-of :initarg :imas)
-   (index-placement :accessor index-placement-of :initarg :index-placement) ))
+   (index-placement :accessor index-placement-of :initarg :index-placement)))
 
 (defmethod print-object ((array ima-append) stream)
-  (print-ima array stream) )
+  (print-ima array stream))
 
 (defun replace-nth (nth list new-val)
   (if (> nth 0)
       (cons (car list) (replace-nth (- nth 1) (cdr list) new-val))
-      (cons new-val (cdr list)) ))
+      (cons new-val (cdr list))))
 
 (defmethod ima-dimensions ((ima ima-append))
   (replace-nth (index-placement-of ima)
@@ -485,36 +485,36 @@ OUTER-TRUNCATE is to TRUNCATE as CEILING in to FLOOR, or something like that."
                (if (consp (imas-of ima))
                    (iter (for arr in (imas-of ima))
                      (summing (ima-dimension
-                               arr (index-placement-of ima) )))
+                               arr (index-placement-of ima))))
                    (iter (for arr in-ima (imas-of ima))
                      (summing (ima-dimension
-                               arr (index-placement-of ima) ))))))
+                               arr (index-placement-of ima)))))))
 
 (defmethod imref ((ima ima-append) &rest idx)
   (let* ((app-index (nth (index-placement-of ima) idx))
          (arr (iter (for arr in (imas-of ima))
                 (finding arr such-that
-                         (< app-index (ima-dimension arr (index-placement-of ima))) )
-                (decf app-index (ima-dimension arr (index-placement-of ima))) )))
-    (apply #'imref arr (replace-nth (index-placement-of ima) idx app-index)) ))
+                         (< app-index (ima-dimension arr (index-placement-of ima))))
+                (decf app-index (ima-dimension arr (index-placement-of ima))))))
+    (apply #'imref arr (replace-nth (index-placement-of ima) idx app-index))))
 (defmethod (setf imref) (new-val (ima ima-group) &rest idx)
   (let* ((app-index (nth (index-placement-of ima) idx))
          (arr (iter (for arr in (imas-of ima))
                 (finding arr such-that
-                         (< app-index (ima-dimension arr (index-placement-of ima))) )
-                (decf app-index (ima-dimension arr (index-placement-of ima))) )))
+                         (< app-index (ima-dimension arr (index-placement-of ima))))
+                (decf app-index (ima-dimension arr (index-placement-of ima))))))
     (setf (apply #'imref arr (replace-nth (index-placement-of ima) idx app-index))
-          new-val )))
+          new-val)))
 ;; (define-modf-method imref 1 (new-val (ima ima-group) &rest idx)
 ;;   (setf (apply #'imref (imref (imas-of ima) (nth (index-placement-of ima) idx))
 ;;                (list-remove-at (index-placement-of ima) idx))
-;;         new-val ))
+;;         new-val))
 
 (def-generic-map
     (defmethod append-imas (imas on-index)
       (make-instance 'ima-append
                      :index-placement on-index
-                     :imas imas )))
+                     :imas imas)))
 
 ;; @\section{Unmapping and converting}
 
@@ -529,11 +529,11 @@ one that unmaps given an example of the type, and one that notices the identity
 unmap \(e.g. we want a list and we already have a list)."
   `(progn
      (defmethod unmap-into ((type (eql ',type)) ,ima-sym)
-       ,@body )
+       ,@body)
      (defmethod unmap-into ((type ,type) ,ima-sym)
-       (unmap-into ',type ,ima-sym) )
+       (unmap-into ',type ,ima-sym))
      (defmethod unmap-into ((type (eql ',type)) (,ima-sym ,type))
-       ,ima-sym )))
+       ,ima-sym)))
 
 (defun unmap (ima)
   "Unmap an IMA into it's base type.  This searches down the layers of IMAs
@@ -541,8 +541,8 @@ until it finds a non-index-mapped-array structure, then unmaps into that."
   (unmap-into (iter (initially (setf arr ima))
                     (while (typep arr 'index-mapped-array))
                     (for arr = (data-of arr))
-                    (finally (return arr)) )
-              ima ))
+                    (finally (return arr)))
+              ima))
 
 ;; @\section{Basic Utilities}
 
@@ -569,8 +569,8 @@ until it finds a non-index-mapped-array structure, then unmaps into that."
   (make-ima-like (iter (initially (setf arr ima))
                    (while (typep arr 'index-mapped-array))
                    (for arr = (data-of arr))
-                   (finally (return arr)) )
-                 :dims dims ))
+                   (finally (return arr)))
+                 :dims dims))
 
 ;; @This is still irksome.  I would like to have the new array more like the
 ;; original, including element type for those data structures that support it.
@@ -579,14 +579,14 @@ until it finds a non-index-mapped-array structure, then unmaps into that."
 
 ;; <<>>=
 (defmethod make-ima-like (ima &key &allow-other-keys)
-  (error "I don't know how to make an IMA like this one") )
+  (error "I don't know how to make an IMA like this one"))
 
 ;; <<>>=
 (defmethod copy-ima (ima)
   "Copy any IMA."
   (let ((new (make-ima-like ima)))
     (setf (contents-of new) ima)
-    new ))
+    new))
 
 ;; @\section{Backends}
 
@@ -606,7 +606,7 @@ until it finds a non-index-mapped-array structure, then unmaps into that."
 ;;   (let ((ret-arr (make-ima-like ima)))
 ;;     (iter (for el in-ima ima ima-index i)
 ;;       (setf (ima-flat-ref ret-arr i)
-;;             (apply fn (cons el (mapcar (lambda (x) (ima-flat-ref x i)) more-imas))) ))
-;;     ret-arr ))
+;;             (apply fn (cons el (mapcar (lambda (x) (ima-flat-ref x i)) more-imas)))))
+;;     ret-arr))
 
 ;; @@ printer.lisp

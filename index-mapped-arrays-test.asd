@@ -4,7 +4,7 @@
   :author "Zachary Smith <elzacho@gmail.com>"
   :license "GPL"
   :components ((:file "util")
-               (:file "ima-test") )
+               (:file "ima-test"))
   :serial t
-  :depends-on (:iterate :modf :index-mapped-arrays :stefil) )
+  :depends-on (:iterate :modf :index-mapped-arrays :stefil))
 

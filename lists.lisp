@@ -29,37 +29,37 @@
 ;; times faster).
 
 (defmethod ima-dimension ((ima cons) axis)
-  (length (n-times axis #'car ima)) )
+  (length (n-times axis #'car ima)))
 (defmethod ima-dimensions ((ima cons))
   ;; This extra binding is makes IMA work on CMUCL
   (let ((ima ima))
     (iter (while (consp ima))
       (collect (length ima))
-      (setf ima (car ima)) )))
+      (setf ima (car ima)))))
 (defmethod imref ((ima cons) &rest idx)
   (declare (optimize (speed 3) (debug 1) (compilation-speed 0) (safety 1) (space 0))
-           (dynamic-extent idx) )
+           (dynamic-extent idx))
   (cond ((null (cdr idx)) (elt ima (first idx)))
         (t (apply #'imref (elt ima (first idx))
-                  (rest idx) ))))
+                  (rest idx)))))
 (defmethod (setf imref) (val (ima cons) &rest idx)
   (labels ((set-spot (list idx)
              (if (null (cdr idx))
                  (setf (nth (car idx) list) val)
-                 (set-spot (nth (car idx) list) (cdr idx)) )))
-    (set-spot ima idx) ))
+                 (set-spot (nth (car idx) list) (cdr idx)))))
+    (set-spot ima idx)))
 
 (defun modf-list (new-val lst idx)
   (if idx
       (if (eql (first idx) 0)
           (cons (modf-list new-val (first lst) (rest idx))
-                (rest lst) )
+                (rest lst))
           (cons (first lst)
-                (modf-list new-val (rest lst) (cons (- (first idx) 1) (rest idx)))) )
-      new-val ))
+                (modf-list new-val (rest lst) (cons (- (first idx) 1) (rest idx)))))
+      new-val))
 
 (define-modf-method imref 1 (new-val (lst cons) &rest idx)
-  (modf-list new-val lst idx) )
+  (modf-list new-val lst idx))
 
 (defun group (source n)
   (if (zerop n) (error "zero length"))
@@ -67,33 +67,33 @@
                 (let ((rest (nthcdr n source)))
                   (if (consp rest)
                       (rec rest (cons (subseq source 0 n) acc))
-                      (nreverse (cons source acc)) ))))
-    (if source (rec source nil) nil) ))
+                      (nreverse (cons source acc))))))
+    (if source (rec source nil) nil)))
 
 (def-unmapper list (ima)
   (labels ((builder (list extents)
              (if extents
                  (builder (group list (car extents)) (cdr extents))
-                 list )))
+                 list)))
     (builder (iter (for i below (apply #'* (ima-dimensions ima)))
-                   (collect (apply #'imref ima (nd-index i (ima-dimensions ima)))) )
-             (butlast (reverse (ima-dimensions ima))) )))
+                   (collect (apply #'imref ima (nd-index i (ima-dimensions ima)))))
+             (butlast (reverse (ima-dimensions ima))))))
 
 (defun make-list-array (extent)
   (if (null (cdr extent))
       (make-list (car extent) :initial-element 0)
       (iter (for i below (car extent))
-            (collect (make-list-array (cdr extent))) )))
+            (collect (make-list-array (cdr extent))))))
 
 (defmethod make-ima-like ((list list) &key (dims (ima-dimensions list))
-                                           &allow-other-keys )
-  (make-list-array dims) )
+                                           &allow-other-keys)
+  (make-list-array dims))
 
 ;; (defmethod make-ima ((like-this list)
 ;;                      &key ima-dimensions data-format
-;;                      (contents nil contents-p) )
+;;                      (contents nil contents-p))
 ;;   (declare (ignore data-format contents contents-p))
-;;   (make-list-array (aif ima-dimensions it (ima-dimensions like-this))) )
+;;   (make-list-array (aif ima-dimensions it (ima-dimensions like-this))))
 
 ;; @In order to have list IMAs behave as we have decided they should
 ;; (i.e. mutations to any mapping of any array must show up in the other
@@ -111,36 +111,36 @@
   (let ((row-direction (1- (length (ima-dimensions ima)))))
     (if (= n row-direction)
         (apply #'imref ima fixed)
-        (call-next-method) )))
+        (call-next-method))))
 
 ;;<<>>=
 (defmethod (setf get-vector) ((new-val cons) (ima cons) n &rest fixed)
   (let ((row-direction (1- (length (ima-dimensions ima)))))
     (if (= n row-direction)
         (apply #'(setf imref) new-val ima fixed)
-        (call-next-method) )))
+        (call-next-method))))
 
 ;;<<>>=
 (defmethod get-block ((ima cons) start extent)
   (let ((dims (ima-dimensions ima))
-        (first-offset (first start)) )
+        (first-offset (first start)))
     (if (= 0 first-offset)
         (if (and (= (first extent) (length ima))
                  (every (/. (s e d) (and (= 0 s) (= e d)))
-                        (cdr start) (cdr dims) (cdr extent) ))
+                        (cdr start) (cdr dims) (cdr extent)))
             ima
-            (call-next-method) )
-        (get-block (nthcdr first-offset ima) (cons 0 (rest start)) extent) )))
+            (call-next-method))
+        (get-block (nthcdr first-offset ima) (cons 0 (rest start)) extent))))
 
 ;;<<>>=
 (defmethod (setf get-block) ((new-val cons) (ima cons) start extent)
   (let ((dims (ima-dimensions ima))
-        (first-offset (first start)) )
+        (first-offset (first start)))
     (if (and (= (first extent) (length ima))
              (every (/. (s e d) (and (= 0 s) (= e d)))
-                    (cdr start) (cdr dims) (cdr extent) ))
+                    (cdr start) (cdr dims) (cdr extent)))
         (setf (nth first-offset ima) new-val)
-        (call-next-method) )))
+        (call-next-method))))
 
 ;; Modf methods
 
@@ -148,5 +148,5 @@
   (let ((row-direction (1- (length (ima-dimensions ima)))))
     (if (= n row-direction)
         (apply (modf-fn imref) new-val ima fixed)
-        (call-next-method) )))
+        (call-next-method))))
 
