@@ -20,13 +20,14 @@
            #:append-imas
            #:unmap #:unmap-into #:def-unmapper
            #:make-ima-like #:copy-ima
+           ;; Some useful mappings
+           #:pbc-array
+           #:index-shift
+           #:nd-index
+           #:linear-index
            ;; Iterate extensions
            #:in-column-vectors-of #:in-row-vectors-of
            #:in-ima
            ;; Mapping (like mapcar mapping)
-           #:map-ima
-           #:pbc-array
-           #:index-shift
-           #:nd-index
-           #:linear-index))
+           #:map-ima))
 
