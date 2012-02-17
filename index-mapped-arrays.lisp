@@ -74,9 +74,9 @@
 ;; emulated index mappings, or it may entail a complete copying of the array.
 ;; It also allows for transforming between possible IMA representations, such as
 ;; from an array to nested lists or a GSL matrix.  Since this can return you the
-;; same instance, it is helpful to have a <<make-ima-like>> method which
-;; gaurantees that the memory will be freshly allocated (but the contents not
-;; copied, for copying, see <<copy-ima>>).
+;; same instance, we also provide the method <<make-ima-like>> which gaurantees
+;; that the memory will be freshly allocated but the contents not copied and the
+;; method <<copy-ima>> for copying.
 
 ;;; Index mapping
 
