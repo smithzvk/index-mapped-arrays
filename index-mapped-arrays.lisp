@@ -134,18 +134,19 @@ underlying structure."
                (dims-of ima)
                :map-desc (map-desc-of ima)))
 
-(defmethod ima-flat-ref (ima index)
+(defmethod ima-flat-ref (ima index &optional (dimensions (ima-dimensions ima)))
   "Allows you to access the data of an IMA in a linear fashion.  No guarantees
 are made as to the order in which the elements are ordered \(this may change in
 the future if it becomes benefitial)."
   (apply #'imref ima
-         (nd-index index (ima-dimensions ima))))
+         (nd-index index dimensions)))
 
-(defmethod (setf ima-flat-ref) (val ima index)
+(defmethod (setf ima-flat-ref) (val ima index
+                                    &optional (dimensions (ima-dimensions ima)))
   "Allows you to set the data of an IMA by referencing the data in a linear
 fashion."
   (setf (apply #'imref ima
-               (nd-index index (ima-dimensions ima)))
+               (nd-index index dimensions))
         val))
 
 (defmethod flat-ima-size (ima)
