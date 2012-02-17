@@ -604,10 +604,11 @@ until it finds a non-index-mapped-array structure, then unmaps into that."
 (defun map-ima (fn ima &rest more-imas)
   "Like MAPCAR, but for IMAs of arbitrary dimensionality.  The IMAs need to
 match in dimensionality."
-  (let ((ret-arr (make-ima-like ima)))
+  (let ((dims (ima-dimensions ima))
+        (ret-arr (make-ima-like ima)))
     (iter (for el in-ima ima with-index i)
-      (setf (ima-flat-ref ret-arr i)
-            (apply fn (cons el (mapcar (lambda (x) (ima-flat-ref x i)) more-imas)))))
+      (setf (ima-flat-ref ret-arr i dims)
+            (apply fn el (mapcar (lambda (x) (ima-flat-ref x i dims)) more-imas))))
     ret-arr))
 
 ;; @@ printer.lisp
