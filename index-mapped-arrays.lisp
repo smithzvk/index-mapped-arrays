@@ -89,8 +89,10 @@
    (map-desc :initarg :map-desc :accessor map-desc-of)
    (map :initarg :map :accessor map-of)))
 
+;;<<>>=
 (defmethod map-desc-of (ima) :raw)
 
+;;<<basic-operations>>=
 (locally
     (declare (optimize (speed 3)))
   (defmethod ima-dimension (ima axis)
@@ -124,6 +126,7 @@
 ;; Using Modf, we can define methods that modify general map places, like
 ;; <<column-vector>> for instance.
 
+;;<<>>=
 (define-modf-method imref 1 (val (ima index-mapped-array) &rest idx)
   "This is an index-mapped-array strcuture, so we will pass the work down to the
 underlying structure."
@@ -134,6 +137,7 @@ underlying structure."
                (dims-of ima)
                :map-desc (map-desc-of ima)))
 
+;;<<>>=
 (defmethod ima-flat-ref (ima index &optional (dimensions (ima-dimensions ima)))
   "Allows you to access the data of an IMA in a linear fashion.  No guarantees
 are made as to the order in which the elements are ordered \(this may change in
@@ -141,6 +145,7 @@ the future if it becomes benefitial)."
   (apply #'imref ima
          (nd-index index dimensions)))
 
+;;<<>>=
 (defmethod (setf ima-flat-ref) (val ima index
                                     &optional (dimensions (ima-dimensions ima)))
   "Allows you to set the data of an IMA by referencing the data in a linear
@@ -149,12 +154,15 @@ fashion."
                (nd-index index dimensions))
         val))
 
+;;<<>>=
 (defmethod flat-ima-size (ima)
   "Returns the linear size of an IMA."
   (apply #'* (ima-dimensions ima)))
 
+;;<<>>=
 (defvar *simplify* t)
 
+;;<<>>=
 (defun map-indices (object map dims &key (map-desc :unknown))
   "Create an object of type index-mapped-array.  This is basically a fall back
 for times when you want a mapping that a data type can't do natively \(which is
@@ -184,6 +192,7 @@ quite often)."
 ;; when applied to many things that require a full copy, for instance arrays.
 ;; This can be aleviated by speciallizing the modf method, which we do.
 
+;;<<>>=
 (defmacro def-generic-map ((defmethod name (ima &rest args) &body body)
                            &rest convenience-functions)
   "Define a generic map which includes an IMREF method definition and a \(SETF
@@ -347,7 +356,7 @@ b_ji."
 
 ;; @\section{Index maps that increase complexity}
 
-;; <<>>=
+;;<<>>=
 (def-generic-map
     (defmethod add-index (ima n)
       (map-indices ima
@@ -355,7 +364,7 @@ b_ji."
                    (list-insert-at n 1 (ima-dimensions ima)))))
 
 ;; Only works on the last index
-;; <<>>=
+;;<<>>=
 (def-generic-map
     (defmethod raise-dimensionality (ima on-index &rest extent)
       (unless (eql on-index (- (length (ima-dimensions ima)) 1))
@@ -430,6 +439,7 @@ OUTER-TRUNCATE is to TRUNCATE as CEILING in to FLOOR, or something like that."
 ;; facilitate this, we have the idea of {\em unmapping}, or getting an instance
 ;; of data that is ``equivalent'', but without any emulated mappings.
 
+;;<<>>=
 (defmacro def-unmapper (type (ima-sym) &body body)
   "Define a set unmapping routines: one that unmaps given the name of the type,
 one that unmaps given an example of the type, and one that notices the identity
@@ -442,12 +452,18 @@ unmap \(e.g. we want a list and we already have a list)."
      (defmethod unmap-into ((type (eql ',type)) (,ima-sym ,type))
        ,ima-sym)))
 
+;; @The method <<base-type-of>> returns the base type of an ima.  This is the
+;; main way an extension writer may change the behavior of <<unmap>>.
+
+;;<<>>=
 (defmethod base-type-of ((ima index-mapped-array))
   (base-type-of (data-of ima)))
 
+;;<<>>=
 (defmethod base-type-of (ima)
   ima)
 
+;;<<>>=
 (defun unmap (ima)
   "Unmap an IMA into it's base type.  This searches down the layers of IMAs
 until it finds a non-index-mapped-array structure, then unmaps into that."
@@ -486,11 +502,11 @@ until it finds a non-index-mapped-array structure, then unmaps into that."
 ;; I can't figure out a nice way to do this: allow low level work like element
 ;; types, but allow a fall back high level interface.
 
-;; <<>>=
+;;<<>>=
 (defmethod make-ima-like (ima &key &allow-other-keys)
   (error "I don't know how to make an IMA like this one"))
 
-;; <<>>=
+;;<<>>=
 (defmethod copy-ima (ima)
   "Copy any IMA."
   (let ((new (make-ima-like ima)))
@@ -512,7 +528,7 @@ until it finds a non-index-mapped-array structure, then unmaps into that."
 
 ;; @\section{Mapping}
 
-;; <<>>=
+;;<<>>=
 (defun map-ima (fn ima &rest more-imas)
   "Like MAPCAR, but for IMAs of arbitrary dimensionality.  The IMAs need to
 match in dimensionality."

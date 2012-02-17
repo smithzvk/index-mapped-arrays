@@ -1,4 +1,5 @@
 
+;;<<>>=
 (defpackage :index-mapped-arrays
   (:use :cl :modf :iter :alexandria :cl-match)
   (:nicknames :ima)

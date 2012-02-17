@@ -9,6 +9,7 @@
 ;; something that, when read, will produce something similar to what was
 ;; printed.  This is about as close as we can get with IMA.
 
+;;<<>>=
 (defun print-ima (array stream)
   "Print the index mapped ARRAY to STREAM using the pretty printer."
   ;; Apapted from the SBCL printer
@@ -27,6 +28,7 @@
                            (output-guts stream (get-slice array 0 i)))))))
            (output-guts stream array)))))
 
+;;<<>>=
 (defmethod print-object ((array index-mapped-array) stream)
   "Print the index mapped ARRAY to STREAM using the pretty printer."
   ;; Apapted from the SBCL printer

@@ -1,11 +1,15 @@
 
 (in-package :ima)
 
+;; @\section{Simplification of Mappings}
+
+;;<<>>=
 (defun in-order (list)
   (cond ((null (cdr list)) t)
         ((< (car list) (cadr list)) (in-order (cdr list)))
         (t nil)))
 
+;;<<>>=
 (defun simplify (new-map ima)
   "A basic, hard-coded, pattern based simplifier."
   (cond ((and (not (eql :unknown new-map))

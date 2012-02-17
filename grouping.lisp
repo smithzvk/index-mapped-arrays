@@ -15,17 +15,22 @@
   ((imas :accessor imas-of :initarg :imas)
    (index-placement :accessor index-placement-of :initarg :index-placement)))
 
+;;<<>>=
 (defmethod print-object ((array ima-group) stream)
   (print-ima array stream))
 
+;;<<>>=
 (defmethod ima-dimensions ((ima ima-group))
   (list-insert-at (index-placement-of ima)
                   (ima-dimension (imas-of ima) 0)
                   (ima-dimensions (imref (imas-of ima) 0))))
 
+;;<<>>=
 (defmethod imref ((ima ima-group) &rest idx)
   (apply #'imref (imref (imas-of ima) (nth (index-placement-of ima) idx))
          (list-remove-at (index-placement-of ima) idx)))
+
+;;<<>>=
 (defmethod (setf imref) (new-val (ima ima-group) &rest idx)
   (setf (apply #'imref (imref (imas-of ima) (nth (index-placement-of ima) idx))
                (list-remove-at (index-placement-of ima) idx))
@@ -35,7 +40,7 @@
 ;;                (list-remove-at (index-placement-of ima) idx))
 ;;         new-val))
 
-;; <<>>=
+;;<<>>=
 (def-generic-map
     (defmethod group-imas (imas on-index)
       (make-instance 'ima-group
@@ -50,14 +55,16 @@
 (defmethod base-type-of ((ima ima-group))
   (base-type-of (first (imas-of ima))))
 
-;; <<>>=
+;;<<>>=
 (modf-def:defclass ima-append ()
   ((imas :accessor imas-of :initarg :imas)
    (index-placement :accessor index-placement-of :initarg :index-placement)))
 
+;;<<>>=
 (defmethod print-object ((array ima-append) stream)
   (print-ima array stream))
 
+;;<<>>=
 (defmethod ima-dimensions ((ima ima-append))
   (replace-nth (index-placement-of ima)
                (ima-dimensions (imref (imas-of ima) 0))
@@ -71,6 +78,7 @@
                      (summing (ima-dimension
                                arr (index-placement-of ima)))))))
 
+;;<<>>=
 (defmethod imref ((ima ima-append) &rest idx)
   (let* ((app-index (nth (index-placement-of ima) idx))
          (arr (iter (for arr in (imas-of ima))
@@ -78,6 +86,7 @@
                          (< app-index (ima-dimension arr (index-placement-of ima))))
                 (decf app-index (ima-dimension arr (index-placement-of ima))))))
     (apply #'imref arr (replace-nth (index-placement-of ima) idx app-index))))
+;;<<>>=
 (defmethod (setf imref) (new-val (ima ima-group) &rest idx)
   (let* ((app-index (nth (index-placement-of ima) idx))
          (arr (iter (for arr in (imas-of ima))
@@ -91,6 +100,7 @@
 ;;                (list-remove-at (index-placement-of ima) idx))
 ;;         new-val))
 
+;;<<>>=
 (def-generic-map
     (defmethod append-imas (imas on-index)
       (make-instance 'ima-append
@@ -98,5 +108,7 @@
                      :imas imas)))
 
 ;; @The append unmapper unmaps according to the `left most' convention.
+
+;;<<>>=
 (defmethod base-type-of ((ima ima-append))
   (base-type-of (first (imas-of ima))))

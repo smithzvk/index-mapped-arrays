@@ -28,20 +28,27 @@
 ;; likely, <<imref>> needs optimizing (doing this with <<aref>> runs about 10
 ;; times faster).
 
+;;<<>>=
 (defmethod ima-dimension ((ima cons) axis)
   (length (n-times axis #'car ima)))
+
+;;<<>>=
 (defmethod ima-dimensions ((ima cons))
   ;; This extra binding is makes IMA work on CMUCL
   (let ((ima ima))
     (iter (while (consp ima))
       (collect (length ima))
       (setf ima (car ima)))))
+
+;;<<>>=
 (defmethod imref ((ima cons) &rest idx)
   (declare (optimize (speed 3) (debug 1) (compilation-speed 0) (safety 1) (space 0))
            (dynamic-extent idx))
   (cond ((null (cdr idx)) (elt ima (first idx)))
         (t (apply #'imref (elt ima (first idx))
                   (rest idx)))))
+
+;;<<>>=
 (defmethod (setf imref) (val (ima cons) &rest idx)
   (labels ((set-spot (list idx)
              (if (null (cdr idx))
@@ -49,6 +56,7 @@
                  (set-spot (nth (car idx) list) (cdr idx)))))
     (set-spot ima idx)))
 
+;;<<>>=
 (defun modf-list (new-val lst idx)
   (if idx
       (if (eql (first idx) 0)
@@ -58,9 +66,11 @@
                 (modf-list new-val (rest lst) (cons (- (first idx) 1) (rest idx)))))
       new-val))
 
+;;<<>>=
 (define-modf-method imref 1 (new-val (lst cons) &rest idx)
   (modf-list new-val lst idx))
 
+;;<<>>=
 (defun group (source n)
   (if (zerop n) (error "zero length"))
   (labels ((rec (source acc)
@@ -70,6 +80,7 @@
                       (nreverse (cons source acc))))))
     (if source (rec source nil) nil)))
 
+;;<<>>=
 (def-unmapper list (ima)
   (labels ((builder (list extents)
              (if extents
@@ -79,12 +90,14 @@
                    (collect (apply #'imref ima (nd-index i (ima-dimensions ima)))))
              (butlast (reverse (ima-dimensions ima))))))
 
+;;<<>>=
 (defun make-list-array (extent)
   (if (null (cdr extent))
       (make-list (car extent) :initial-element 0)
       (iter (for i below (car extent))
             (collect (make-list-array (cdr extent))))))
 
+;;<<>>=
 (defmethod make-ima-like ((list list) &key (dims (ima-dimensions list))
                                            &allow-other-keys)
   (make-list-array dims))
@@ -142,8 +155,9 @@
         (setf (nth first-offset ima) new-val)
         (call-next-method))))
 
-;; Modf methods
+;; @\subsection{Modf Methods}
 
+;;<<>>=
 (define-modf-method get-vector 1 ((new-val cons) (ima cons) n &rest fixed)
   (let ((row-direction (1- (length (ima-dimensions ima)))))
     (if (= n row-direction)
