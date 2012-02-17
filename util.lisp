@@ -90,3 +90,9 @@ list."
 multiple values.  This is very useful for multiple-value-compose."
   (apply #'values (permute-list perm args)))
 
+(defun replace-nth (nth list new-val)
+  (if (> nth 0)
+      (cons (car list) (replace-nth (- nth 1) (cdr list) new-val))
+      (cons new-val (cdr list))))
+
+

@@ -473,10 +473,6 @@ OUTER-TRUNCATE is to TRUNCATE as CEILING in to FLOOR, or something like that."
 (defmethod print-object ((array ima-append) stream)
   (print-ima array stream))
 
-(defun replace-nth (nth list new-val)
-  (if (> nth 0)
-      (cons (car list) (replace-nth (- nth 1) (cdr list) new-val))
-      (cons new-val (cdr list))))
 
 (defmethod ima-dimensions ((ima ima-append))
   (replace-nth (index-placement-of ima)
