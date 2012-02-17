@@ -19,6 +19,7 @@
            ;; Grouping IMAs
            #:group-imas
            #:append-imas
+           #:base-type-of
            #:unmap #:unmap-into #:def-unmapper
            #:make-ima-like #:copy-ima
            ;; Some useful mappings
