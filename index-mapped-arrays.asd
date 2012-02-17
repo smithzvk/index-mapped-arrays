@@ -19,6 +19,7 @@ with the fundamental data structure and indices."
                (:file "simplifier")
                (:file "arrays")
                (:file "lists")
+               (:file "grouping")
                (:file "printer"))
   :serial t
   :depends-on (:alexandria :cl-match :iterate :modf))
