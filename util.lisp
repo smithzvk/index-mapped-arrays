@@ -52,10 +52,18 @@ by the ``_'' symbol."
 
 ;;<<>>=
 (defun linear-index (index extents)
-  (apply #'+
-         (mapcar #'* index
-                 (iter (for spacing on extents)
-                       (collect (apply #'* (cdr spacing)))))))
+  (iter
+    (for spacing on extents)
+    (for i in index)
+    (let ((size-of-slab (apply #'* (cdr spacing))))
+      (summing (* i size-of-slab)))))
+
+;; The old version: it conses more and I think it's less clear
+;; (defun linear-index (index extents)
+;;   (apply #'+
+;;          (mapcar #'* index
+;;                  (iter (for spacing on extents)
+;;                        (collect (apply #'* (cdr spacing)))))))
 
 ;;<<>>=
 (defun n-times (n func arg)
