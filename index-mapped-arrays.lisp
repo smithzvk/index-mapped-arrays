@@ -408,7 +408,7 @@ OUTER-TRUNCATE is to TRUNCATE as CEILING in to FLOOR, or something like that."
   (let ((rat (/ x divisor)))
     (* (sign rat) (ceiling (abs rat)))))
 
-;;<<>>=
+;;<<pbc-array>>=
 (def-generic-map
     (defmethod pbc-array (ima)
       (ima::map-indices ima (lambda (idx)
@@ -421,7 +421,14 @@ OUTER-TRUNCATE is to TRUNCATE as CEILING in to FLOOR, or something like that."
                                      (- i (* extent (floor i extent)))))))
                         (ima-dimensions ima))))
 
-;;<<>>=
+;; @The <<index-shift>> map shifts the indices by the prescribed values.  Note
+;; that this makes the array unprintable as the printer always iterates from 0
+;; to the max of each index.  I have not decided how to deal with this (perhaps
+;; move it to a distinct type or include the min index in the IMA structure) but
+;; when paired with the <<pbc-array>> map, the array becomes printable again,
+;; and the information is all present, though perhaps scrambled up a bit.
+
+;;<<index-shift>>=
 (def-generic-map
     (defmethod index-shift (ima &rest shifts)
       (ima::map-indices ima (lambda (idx)
