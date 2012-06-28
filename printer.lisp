@@ -14,7 +14,7 @@
   "Print the index mapped ARRAY to STREAM using the pretty printer."
   ;; Apapted from the SBCL printer
   (cond (*print-readably*
-         (print (unmap-into 'array array)))
+         (print (unmap-into 'array array) stream))
         (t (funcall (formatter "#~DD-IMA") stream (length (ima-dimensions array)))
          (labels ((output-guts (stream array)
                     (pprint-logical-block
