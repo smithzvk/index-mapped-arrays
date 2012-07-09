@@ -1,10 +1,10 @@
 
 ;;<<>>=
-(defpackage :ima-test
+(defpackage :index-mapped-arrays-test
   (:use :cl :stefil :modf :ima :iter)
   (:export #:run-tests))
 
-(in-package ima-test)
+(in-package :index-mapped-arrays-test)
 
 (in-root-suite)
 
