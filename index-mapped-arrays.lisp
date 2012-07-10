@@ -124,7 +124,7 @@ fashion."
         val))
 
 ;;<<>>=
-(defmethod flat-ima-size (ima)
+(defmethod ima-flat-size (ima)
   "Returns the linear size of an IMA."
   (apply #'* (ima-dimensions ima)))
 

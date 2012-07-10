@@ -24,5 +24,5 @@
 ;;<<>>=
 (defclause-sequence in-ima ima-index
   :access-fn 'ima-flat-ref
-  :size-fn 'flat-ima-size
+  :size-fn 'ima-flat-size
   :sequence-type t :element-type t)
