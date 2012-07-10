@@ -15,7 +15,7 @@
            #:get-block #:submatrix #:subvector
            #:transpose
            ;; Raising the dimensionality
-           #:add-index #:raise-dimensionality #:group-elements-by
+           #:add-index #:group-elements-by
            ;; Grouping IMAs
            #:group-imas
            #:append-imas
@@ -33,5 +33,7 @@
            ;; Mapping (like mapcar mapping)
            #:map-ima
            #:ensure-ima
-           #:ima-p))
+           #:ima-p
+           #:split-dimension
+           #:combine-dimensions))
 

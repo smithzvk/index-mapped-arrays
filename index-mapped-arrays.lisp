@@ -282,31 +282,19 @@ elements."
       (get-block ima (list start) (list (or extent (- (ima-dimension ima 0)
                                                       start))))))
 
-;; @\section{Index maps that increase dimensionality}
+;; @\section{General Maps For Changing Dimensionality}
 
-;; The simplest thing way to increase the dimensionality is to simply introduce
-;; a fixed index via <<add-index>>.  This index can only have the value of 0,
-;; but serves to introduce a new index that might be used in another IMA
-;; mapping.
-
-;;<<>>=
-(def-generic-map
-    (defmethod add-index (ima n)
-      (map-indices ima
-                   (/. (idx) (list-remove-at n idx))
-                   (list-insert-at n 1 (ima-dimensions ima)))))
-
-;; @Another method of raising the dimensionality is regroup the elements into a
-;; new dimensionality.  This is an operation that can sometimes be done with
-;; Lisp arrays using a disclaced array.  Our most general method of displacing
-;; arrays is to use <<map-ima>>, but we have a separate method for raising and
-;; lowering dimensionality.  To raise the dimensionality, you pick dimension and
-;; choose a new extent.  That chosen dimension will be split into a two index
-;; subspace, where the first index will be the more significant.
+;; @One often wishes to take an IMA and change the shape, but not the elements
+;; in it.  I refer this to changing its dimensionality.  This is reminiscent of
+;; the effect of using a displaced array to a standard Common Lisp array.  In
+;; order to facilitate these sorts of manipulations, we provide a the methods
+;; <<split-dimension>> and <<combine-dimensions>> which raise and lower the
+;; dimensionality by splitting an indexes extent into two indices or combining
+;; two indices into one.
 
 ;;<<>>=
 (def-generic-map
-    (defmethod raise-dimensionality (ima on-index new-extent)
+    (defmethod split-dimension (ima on-index new-extent)
       ;; (unless (eql on-index (- (length (ima-dimensions ima)) 1))
       ;;   (error "This only works on the last index of the array, for now."))
       (let ((div (/ (nth on-index (ima-dimensions ima))
@@ -329,6 +317,37 @@ elements."
                       (subseq idx (+ on-index 2))))
            new-dims)))))
 
+(def-generic-map
+    (defmethod combine-dimensions (ima on-index)
+      (let ((new-extent (* (nth on-index (ima-dimensions ima))
+                           (nth (+ 1 on-index) (ima-dimensions ima)))))
+        (ima-dimensions ima)
+        (let* ((subspace-dims (subseq (ima-dimensions ima) on-index (+ on-index 2)))
+               (new-dims (append (subseq (ima-dimensions ima) 0 on-index)
+                                 (list new-extent)
+                                 (subseq (ima-dimensions ima) (+ on-index 2)))))
+          (prog1
+              (map-indices
+               ima
+               (lambda (idx)
+                 (append (subseq idx 0 on-index)
+                         (let ((val (nth on-index idx)))
+                           (list
+                            (floor val (second subspace-dims))
+                            (mod val (second subspace-dims))))
+                         (subseq idx (+ on-index 1))))
+               new-dims))))))
+
+;; @We also define a few helper maps that do common things, such as adding a
+;; fixed index.  The simplest thing way to increase the dimensionality is to
+;; simply introduce a fixed index via <<add-index>>.  This index can only have
+;; the value of 0, but serves to introduce a new index that might be used in
+;; another IMA mapping.
+
+;;<<>>=
+(def-generic-map
+    (defun add-index (ima n)
+      (split-dimension ima n 1)))
 ;; @\subsection{Some other useful maps}
 
 ;; Now we define a few extremely useful index maps.  Here we define the maps
