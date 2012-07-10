@@ -11,7 +11,7 @@
 ;; type <<ima-group>> that hold a conglomeration of several IMAs.
 
 ;; <<>>=
-(modf-def:defclass ima-group ()
+(defclass ima-group ()
   ((imas :accessor imas-of :initarg :imas)
    (index-placement :accessor index-placement-of :initarg :index-placement)))
 
@@ -35,10 +35,6 @@
   (setf (apply #'imref (imref (imas-of ima) (nth (index-placement-of ima) idx))
                (list-remove-at (index-placement-of ima) idx))
         new-val))
-;; (define-modf-method imref 1 (new-val (ima ima-group) &rest idx)
-;;   (setf (apply #'imref (imref (imas-of ima) (nth (index-placement-of ima) idx))
-;;                (list-remove-at (index-placement-of ima) idx))
-;;         new-val))
 
 ;;<<>>=
 (def-generic-map
@@ -56,7 +52,7 @@
   (base-type-of (first (imas-of ima))))
 
 ;;<<>>=
-(modf-def:defclass ima-append ()
+(defclass ima-append ()
   ((imas :accessor imas-of :initarg :imas)
    (index-placement :accessor index-placement-of :initarg :index-placement)))
 
@@ -95,10 +91,6 @@
                 (decf app-index (ima-dimension arr (index-placement-of ima))))))
     (setf (apply #'imref arr (replace-nth (index-placement-of ima) idx app-index))
           new-val)))
-;; (define-modf-method imref 1 (new-val (ima ima-group) &rest idx)
-;;   (setf (apply #'imref (imref (imas-of ima) (nth (index-placement-of ima) idx))
-;;                (list-remove-at (index-placement-of ima) idx))
-;;         new-val))
 
 ;;<<>>=
 (def-generic-map

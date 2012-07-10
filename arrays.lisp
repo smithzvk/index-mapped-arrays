@@ -24,12 +24,6 @@
   (setf (apply #'aref ima idx) val))
 
 ;;<<>>=
-(define-modf-method imref 1 (val (ima array) &rest idx)
-  (let ((new (copy-array ima)))
-    (setf (apply #'aref new idx) val)
-    new))
-
-;;<<>>=
 (def-unmapper array (ima)
   (let* ((arr (make-array (ima-dimensions ima))))
     (if (= 1 (length (ima-dimensions ima)))
@@ -61,12 +55,3 @@
 (defmethod get-block ((ima vector) start extent)
   (fsubvec ima (first start) (+ (first start) (first extent))))
 
-;; @\subsection{Modf Methods}
-
-;;<<>>=
-(define-modf-method get-vector 1 (new-val (ima array) n &rest fixed)
-  (let* ((new-array (copy-array ima))
-         (vec (apply #'get-vector new-array n fixed)))
-    (iter (for el in-ima new-val with-index i)
-      (setf (imref vec i) el))
-    new-array))

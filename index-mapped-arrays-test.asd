@@ -6,5 +6,5 @@
   :components ((:file "util")
                (:file "ima-test"))
   :serial t
-  :depends-on (:iterate :modf :index-mapped-arrays :stefil))
+  :depends-on (:iterate :index-mapped-arrays :stefil))
 

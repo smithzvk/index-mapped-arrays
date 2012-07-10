@@ -64,20 +64,6 @@
     (set-spot ima idx)))
 
 ;;<<>>=
-(defun modf-list (new-val lst idx)
-  (if idx
-      (if (eql (first idx) 0)
-          (cons (modf-list new-val (first lst) (rest idx))
-                (rest lst))
-          (cons (first lst)
-                (modf-list new-val (rest lst) (cons (- (first idx) 1) (rest idx)))))
-      new-val))
-
-;;<<>>=
-(define-modf-method imref 1 (new-val (lst cons) &rest idx)
-  (modf-list new-val lst idx))
-
-;;<<>>=
 (defun group (source n)
   (if (zerop n) (error "zero length"))
   (labels ((rec (source acc)
@@ -160,14 +146,5 @@
              (every (/. (s e d) (and (= 0 s) (= e d)))
                     (cdr start) (cdr dims) (cdr extent)))
         (setf (nth first-offset ima) new-val)
-        (call-next-method))))
-
-;; @\subsection{Modf Methods}
-
-;;<<>>=
-(define-modf-method get-vector 1 ((new-val cons) (ima cons) n &rest fixed)
-  (let ((row-direction (1- (length (ima-dimensions ima)))))
-    (if (= n row-direction)
-        (apply (modf-fn imref) new-val ima fixed)
         (call-next-method))))
 

@@ -53,20 +53,14 @@
 ;; interface for any data requires you to define <<ima-dimensions>>,
 ;; <<ima-dimension>>, <<imref>>, <<(setf imref)>> if you want to set elements,
 ;; Modf functions (which I'll refer to as <<(modf imref)>>) if you want to
-;; provide a functional modification method, and a set of <<unmap-into>> methods
-;; and <make-ima-like>> methods.  It sounds like a lot, but it really isn't.
-;; Some methods can be omitted with decreased functionality.
+;; provide a functional modification method (left to another library
+;; <ima-modf>), and a set of <<unmap-into>> methods and <make-ima-like>>
+;; methods.  It sounds like a lot, but it really isn't.  Some methods can be
+;; omitted with decreased functionality.
 
 ;; @The functions <<ima-dimension>>, <<ima-dimensions>>, and <<imref>> are
 ;; necessary to hook your data structure into the generic interface.  They are
 ;; absolutely required.
-
-;; @The functions <<(setf imref)>> and <<(modf imref)>> offer a way to mutate or
-;; functionally change the IMA.  Typically one is used more often than the other
-;; because a data structure either aims to be functional or mutable.  If you are
-;; using a mutable data format, it might be nice if you also include an <<(modf
-;; imref)>> definition, but if you using an immutable data structure, it is
-;; often impossible to provide a {\em setf} that behaves sanely.
 
 ;; @The <<unmap-into>> functions allow the user to recieve a version of the
 ;; array that is element by element equal (in some sense of the word) to the
@@ -111,31 +105,6 @@
     (setf (apply #'imref (data-of ima)
                  (funcall (the function (map-of ima)) idx))
           val)))
-
-;; @{\em Note:} If you are using your IMA in a functional way with <<(modf
-;; imref)>>, you should probably not be using <<(setf imref)>>.  <<(setf
-;; imref)>> changes the original data, <<(modf imref)>> returns a new structure
-;; and makes no promises on whether structure is shared or not.  You could
-;; imagine that you might get something back from <<(modf imref)>> that shares
-;; part of it's structure with the underlying data.  Then when you set, it might
-;; be changing the original data, or not.  When you look at that orignial array,
-;; it is very likely that it has been corrupted.
-
-;; The function <<(modf imref)>> is the analog of the function <<(setf imref)>>.
-;; It returns a new IMA with the given, single element changes to a new value.
-;; Using Modf, we can define methods that modify general map places, like
-;; <<column-vector>> for instance.
-
-;;<<>>=
-(define-modf-method imref 1 (val (ima index-mapped-array) &rest idx)
-  "This is an index-mapped-array strcuture, so we will pass the work down to the
-underlying structure."
-  (map-indices (modf (apply #'imref (modf-eval (data-of ima))
-                            (funcall (map-of ima) idx))
-                     val)
-               (map-of ima)
-               (dims-of ima)
-               :map-desc (map-desc-of ima)))
 
 ;;<<>>=
 (defmethod ima-flat-ref (ima index &optional (dimensions (ima-dimensions ima)))
@@ -186,11 +155,7 @@ quite often)."
 ;; way to make a new instance of the IMA with given changes to the data
 ;; referenced by the map.  Each of these generic features are in essence
 ;; inefficient.  The mapping requires an extra function evaluation.  The generic
-;; setf of a map requires access via imref, which is known to be slow.  The
-;; generic modification of maps takes the cake and will require O(N*m) time
-;; where N is the number of data elements and m is the number of desired changes
-;; when applied to many things that require a full copy, for instance arrays.
-;; This can be aleviated by speciallizing the modf method, which we do.
+;; <setf> of a map requires access via <<imref>>, which is known to be slow.
 
 ;;<<>>=
 (defmacro def-generic-map ((defmethod name (ima &rest args) &body body)
@@ -215,26 +180,6 @@ IMREF) method definition."
                                         (ima-dimensions ,mapped-data-sym)))
                        el))
            ,new-val-sym))
-       (define-modf-method ,name 1 (,new-val-sym ,ima ,@args)
-         (let* ((,ima (map-indices ,ima
-                                   #'identity
-                                   (ima-dimensions ,ima)))
-                (,mapped-data-sym
-                  ,(if (member '&rest args)
-                       (append (list 'apply `(function ,name) ima)
-                               (remove '&rest args))
-                       (list* name ima args)))
-                (ret ,ima))
-           (iter (for dest-el in-ima ,mapped-data-sym with-index ,mapped-i-sym)
-                 (for el in-ima ,new-val-sym)
-             (setf ret
-                   (modf (apply
-                          #'imref ret
-                          (funcall (map-of ,mapped-data-sym)
-                                   (nd-index ,mapped-i-sym
-                                             (ima-dimensions ,mapped-data-sym))))
-                         el)))
-           (data-of ret)))
        ,@(iter (for (defun conv-name conv-args . conv-body) in convenience-functions)
                (collecting
                 (destructuring-bind (doc-string body)
@@ -246,13 +191,11 @@ IMREF) method definition."
                                  (defun (setf ,conv-name) ,(cons new-val-sym
                                                             conv-args)
                                    ,@doc-string
-                                   (setf ,@body ,new-val-sym))
-                                 (define-modf-function ,conv-name 1
-                                     ,(cons new-val-sym conv-args)
-                                   ,@doc-string
-                                   (modf ,@body ,new-val-sym))))
+                                   (setf ,@body ,new-val-sym))))
                         (t
-                         (warn "Not creating a SETF or MODF function.  In order to create a SETF function, your convenience function bodies can only be a single form which is usable as a place.")
+                         (warn "Not creating a SETF function.  In order to create a~
+                                SETF function, your convenience function bodies can~
+                                only be a single form which is usable as a place.")
                          `(defun ,conv-name ,conv-args ,@doc-string ,@body)))))))))
 
 ;; @<<self-map>> is a trick to allow you to {\em setf} entire IMA contents.

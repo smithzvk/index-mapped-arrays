@@ -1,7 +1,7 @@
 
 ;;<<>>=
 (defpackage :index-mapped-arrays-test
-  (:use :cl :stefil :modf :ima :iter)
+  (:use :cl :stefil :ima :iter)
   (:export #:run-tests))
 
 (in-package :index-mapped-arrays-test)
@@ -12,7 +12,6 @@
 
 ;;<<>>=
 (deftest run-tests ()
-  (modf-test-simple)
   (list-tests)
   (array-tests))
 
@@ -25,22 +24,6 @@
   (is (typep (unmap-into 'list ima) 'list))
   (is (typep (unmap-into 'array ima) 'array)))
 
-;;<<>>=
-(deftest modf-test-simple ()
-  ;; vector
-  (is (equal '(1 2 t 4 5) (modf (imref (modf-eval '(1 2 3 4 5)) 2) t)))
-  ;; matrix
-  (is (equal '((1 2) (t 4))
-             (modf (imref (modf-eval '((1 2) (3 4))) 1 0) t)))
-  ;; nested modf expansions
-  (is (iter
-        (for l1 in-sequence #((1 2) (t 4)))
-        (for l2 in-sequence (modf (imref (imref (modf-eval #((1 2) (3 4))) 1) 0) t))
-        (always
-         (iter
-           (for el1 in l1)
-           (for el2 in l2)
-           (always (equal el1 el2)))))))
 
 ;;<<>>=
 (defun %compare-imas-by-element (ima1 ima2)
@@ -108,43 +91,6 @@
     (is (equal (imref 2d-arr 1 1) (imref sub-row-vec 0)))
     (is (equal (imref 2d-arr 1 1) (imref sub-col-vec 0)))))
 
-;;<<>>=
-(deftest modf-test (2d-arr)
-  ;; row-vectors
-  (is (compare-imas-by-element
-       (let ((ima (copy-ima 2d-arr)))
-         (setf (row-vector ima 1) '(this is test))
-         ima)
-       (modf (row-vector 2d-arr 1) '(this is test))))
-  (is (compare-imas-by-element
-       (let ((ima (copy-ima 2d-arr)))
-         (setf (row-vector ima 1) #(this is test))
-         ima)
-       (modf (row-vector 2d-arr 1) #(this is test))))
-  ;; column-vectors
-  (is (compare-imas-by-element
-       (let ((ima (copy-ima 2d-arr)))
-         (setf (column-vector ima 1) '(this is test))
-         ima)
-       (modf (column-vector 2d-arr 1) '(this is test))))
-  (is (compare-imas-by-element
-       (let ((ima (copy-ima 2d-arr)))
-         (setf (column-vector ima 1) #(this is test))
-         ima)
-       (modf (column-vector 2d-arr 1) #(this is test))))
-  ;; blocks
-  (is (compare-imas-by-element
-       (let ((ima (copy-ima 2d-arr)))
-         (setf (submatrix ima 1 1 2 2) '((this is) (testing it)))
-         ima)
-       (modf (submatrix 2d-arr 1 1 2 2) '((this is) (testing it)))))
-  ;; Nested accessors
-  (is (compare-imas-by-element
-       (let ((ima (copy-ima 2d-arr)))
-         (setf (column-vector (submatrix ima 1 1) 0) '(a b))
-         ima)
-       (modf (column-vector (submatrix 2d-arr 1 1) 0) '(a b)))))
-
 (defsuite* list-ima)
 
 ;;<<>>=
@@ -167,7 +113,6 @@ returned rather than mapped via the more general mechanism."
   (make-ima-like-tests *list-ima*)
   (mapping-tests *list-ima*)
   (list-smart-mapping *list-ima*)
-  (modf-test *list-ima*)
   (mutation-test *list-ima*))
 
 (defsuite* array-ima)
@@ -190,5 +135,4 @@ returned rather than mapped via the more general mechanism."
   (make-ima-like-tests *array-ima*)
   (mapping-tests *array-ima*)
   (array-smart-mapping *array-ima*)
-  (modf-test *array-ima*)
   (mutation-test *array-ima*))
