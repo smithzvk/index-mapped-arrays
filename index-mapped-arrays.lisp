@@ -212,7 +212,7 @@ array."
 array."
       (self-map ima)))
 
-;; @\section{Index maps that reduce complexity}
+;; @\section{Index maps that reduce dimensionality}
 
 ;;<<>>=
 (def-generic-map
@@ -296,8 +296,12 @@ PERMUTATION."
       "Given a 2-D array, A, return an array, B, where the elements a_ij =
 b_ji."
       (permute-indices ima '(1 0))))
+;; @\section{Index maps that increase dimensionality}
 
-;; @\section{Index maps that increase complexity}
+;; The simplest thing way to increase the dimensionality is to simply introduce
+;; a fixed index via <<add-index>>.  This index can only have the value of 0,
+;; but serves to introduce a new index that might be used in another IMA
+;; mapping.
 
 ;;<<>>=
 (def-generic-map
