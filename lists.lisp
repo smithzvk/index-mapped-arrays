@@ -28,17 +28,24 @@
 ;; likely, <<imref>> needs optimizing (doing this with <<aref>> runs about 10
 ;; times faster).
 
-;;<<>>=
+;;<<ima-dimension-lists,2>>=
 (defmethod ima-dimension ((ima cons) axis)
   (length (n-times axis #'car ima)))
 
-;;<<>>=
+(defmethod ima-dimension ((ima (eql nil)) axis)
+  0)
+
+;;<<ima-dimensions-lists,2>>=
 (defmethod ima-dimensions ((ima cons))
   ;; This extra binding is makes IMA work on CMUCL
   (let ((ima ima))
     (iter (while (consp ima))
       (collect (length ima))
       (setf ima (car ima)))))
+
+(defmethod ima-dimensions ((ima (eql nil)))
+  (list 0))
+
 
 ;;<<>>=
 (defmethod imref ((ima cons) &rest idx)
