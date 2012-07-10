@@ -306,27 +306,38 @@ b_ji."
                    (/. (idx) (list-remove-at n idx))
                    (list-insert-at n 1 (ima-dimensions ima)))))
 
-;; Only works on the last index
+;; @Another method of raising the dimensionality is regroup the elements into a
+;; new dimensionality.  This is an operation that can sometimes be done with
+;; Lisp arrays using a disclaced array.  Our most general method of displacing
+;; arrays is to use <<map-ima>>, but we have a separate method for raising and
+;; lowering dimensionality.  To raise the dimensionality, you pick dimension and
+;; choose a new extent.  That chosen dimension will be split into a two index
+;; subspace, where the first index will be the more significant.
+
 ;;<<>>=
 (def-generic-map
-    (defmethod raise-dimensionality (ima on-index &rest extent)
-      (unless (eql on-index (- (length (ima-dimensions ima)) 1))
-        (error "This only works on the last index of the array, for now."))
-      (let* ((subspace-dims (cons (/ (nth on-index (ima-dimensions ima))
-                                     (apply #'* extent))
-                                  extent))
-             (new-dims (append (subseq (ima-dimensions ima) 0 on-index)
-                               subspace-dims)))
-        (map-indices
-         ima
-         (/. (idx)
-            (append
-             (subseq idx 0 on-index)
-             (list (linear-index (subseq idx on-index (1+ (length extent)))
-                                 subspace-dims))))
-         new-dims)))
-    (defun group-elements-by (ima &rest extent)
-      (apply #'raise-dimensionality ima 0 extent)))
+    (defmethod raise-dimensionality (ima on-index new-extent)
+      ;; (unless (eql on-index (- (length (ima-dimensions ima)) 1))
+      ;;   (error "This only works on the last index of the array, for now."))
+      (let ((div (/ (nth on-index (ima-dimensions ima))
+                    new-extent)))
+        (unless (integerp div)
+          (error "~A doesn't divide evenly into ~A." new-extent
+                 (nth on-index (ima-dimensions ima))))
+        (let* ((subspace-dims (list new-extent div))
+               (new-dims (append (subseq (ima-dimensions ima) 0 on-index)
+                                 subspace-dims
+                                 (subseq (ima-dimensions ima) (+ on-index 1)))))
+          (map-indices
+           ima
+           (/. (idx)
+              (append (subseq idx 0 on-index)
+                      (list
+                       (apply #'+
+                              (mapcar #'* (subseq idx on-index (+ on-index 2))
+                                      (list div 1))))
+                      (subseq idx (+ on-index 2))))
+           new-dims)))))
 
 ;; @\subsection{Some other useful maps}
 
