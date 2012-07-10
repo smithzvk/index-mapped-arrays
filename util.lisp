@@ -114,4 +114,15 @@ multiple values.  This is very useful for multiple-value-compose."
       (cons (car list) (replace-nth (- nth 1) (cdr list) new-val))
       (cons new-val (cdr list))))
 
+;;<<>>=
+(defun ensure-ima (maybe-ima)
+  "Ensure that the returned value is an IMA."
+  (if (ima-p maybe-ima)
+      maybe-ima
+      (list maybe-ima)))
 
+;;<<>>=
+(defun ima-p (maybe-ima)
+  "Determine if the object is a valid IMA."
+  (and (compute-applicable-methods #'imref (list maybe-ima))
+       t))
