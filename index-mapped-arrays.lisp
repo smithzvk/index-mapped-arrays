@@ -282,20 +282,6 @@ elements."
       (get-block ima (list start) (list (or extent (- (ima-dimension ima 0)
                                                       start))))))
 
-;;<<>>=
-(def-generic-map
-    (defmethod permute-indices (ima permutation)
-      "Given an array, A, return an array, B, where the elements a_i...j =
-b_n...m where indices n through m are the indices i through j permuted by
-PERMUTATION."
-      (map-indices ima
-                   (/. (idx) (permute-list permutation idx))
-                   (permute-list permutation (ima-dimensions ima))
-                   :map-desc (list :perm permutation)))
-    (defun transpose (ima)
-      "Given a 2-D array, A, return an array, B, where the elements a_ij =
-b_ji."
-      (permute-indices ima '(1 0))))
 ;; @\section{Index maps that increase dimensionality}
 
 ;; The simplest thing way to increase the dimensionality is to simply introduce
@@ -378,6 +364,21 @@ OUTER-TRUNCATE is to TRUNCATE as CEILING in to FLOOR, or something like that."
                                      (- i (* extent (outer-truncate i extent)))
                                      (- i (* extent (floor i extent)))))))
                         (ima-dimensions ima))))
+
+;;<<>>=
+(def-generic-map
+    (defmethod permute-indices (ima permutation)
+      "Given an array, A, return an array, B, where the elements a_i...j =
+b_n...m where indices n through m are the indices i through j permuted by
+PERMUTATION."
+      (map-indices ima
+                   (/. (idx) (permute-list permutation idx))
+                   (permute-list permutation (ima-dimensions ima))
+                   :map-desc (list :perm permutation)))
+    (defun transpose (ima)
+      "Given a 2-D array, A, return an array, B, where the elements a_ij =
+b_ji."
+      (permute-indices ima '(1 0))))
 
 ;; @The <<index-shift>> map shifts the indices by the prescribed values.  Note
 ;; that this makes the array unprintable as the printer always iterates from 0
