@@ -143,6 +143,10 @@ quite often)."
                      :dims dims
                      :map-desc (list map-desc (map-desc-of object)))))
 
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (when (asdf:find-system :cl-match)
+    (pushnew :cl-match *features*)))
+
 ;; @\section{Common (built in) maps}
 
 ;; @This is an ugly, fragile macro that declares generic imref and (setf imref)
