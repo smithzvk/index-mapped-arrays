@@ -2,23 +2,32 @@
 * Index Mapped Arrays
 
 The original goal of Index Mapped Arrays was at first to ease interaction with
-arrays.  It quickly generalized to a generic, versatile interface to any data
-that could represent an array of data.
+arrays.  It quickly expanded to a generic, versatile interface to any data that
+could represent an array of data.
+
+Index Mapped Arrays basically generalizes the idea of an array to many different
+Lisp types and is in fact extensible so it can work with any data type where the
+data can be accessed via a list of integers.  It performs this generalization on
+top of existing data types, meaning that it is meant to be used with standard
+Lisp arrays, lists, strings, etc, and provides a unified interface for all of
+them.  One of the major goals of Index Mapped Arrays is to integrate seamlessly
+with standard Common Lisp.
+
+Index Mapped Arrays is written in portable ANSI CL and has only a few
+dependencies (Alexandria, Iterate, and CL-Match).  It is tested routinely and
+known to work on recent versions of SBCL, CMUCL, ECL, CLISP, ABCL.  If this
+library doesn't work on one of these implementations or any ANSI compatible
+implementation, please report a bug.
 
 ** Examples
 
-
+Coming soon...
 
 ** License
 
-3-clause BSD.
+Lesser Lisp GPL.
 
 ** Author
 
 Zach Kost-Smith <zachkostsmith@gmail.com>
 
-** Known issues
-
-In CMUCL, you cannot (modf (get-block ...) ...).  This is because Alexandria's
-copy-array function doesn't work right on CMUCL.  For evidence, try (copy-array
-(copy-array #2A((1 2) (3 4)))).
