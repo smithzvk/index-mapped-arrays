@@ -49,8 +49,55 @@
   (is (compare-imas-by-element (column-vector array 1) (row-vector (transpose array) 1)))
   (is (compare-imas-by-element (submatrix (submatrix array 0 0 2 2) 1 1 1 1)
                                (submatrix (submatrix array 1 1 2 2) 0 0 1 1)))
+  (combination-mapping-tests array)
   (reshape-test array))
 
+;;<<>>=
+(deftest combination-mapping-tests (array)
+  "Test simple mappings.  This tests the correctness of the mapping techniques."
+  ;; Grouping IMAs
+  (is (compare-imas-by-element
+       array
+       (group-imas
+        (iter (for column-index below (ima-dimension array 1))
+          (collect (column-vector array column-index)))
+        1)))
+  (is (compare-imas-by-element
+       array
+       (group-imas
+        (iter (for row-index below (ima-dimension array 0))
+          (collect (row-vector array row-index)))
+        0)))
+  ;; Appending
+  (is (compare-imas-by-element
+       (apply #'append (unmap-into 'list (transpose array)))
+       (append-imas
+        (iter (for column-index below (ima-dimension array 1))
+          (collect (column-vector array column-index)))
+        0)))
+  (is (compare-imas-by-element
+       (apply #'append (unmap-into 'list array))
+       (append-imas
+        (iter (for row-index below (ima-dimension array 0))
+          (collect (row-vector array row-index)))
+        0)))
+  ;; Appending (basically equivalent to the grouping code)
+  ;; (is (compare-imas-by-element
+  ;;      (apply #'append (unmap-into 'list (transpose array)))
+  ;;      (append-imas
+  ;;       (iter (for column-index below (ima-dimension array 1))
+  ;;         (collect (column-vector array column-index)))
+  ;;       0)))
+  ;; (is (compare-imas-by-element
+  ;;      (unmap-into 'list array)
+  ;;      (append-imas
+  ;;       (iter (for row-index below (ima-dimension array 0))
+  ;;         (collect (split-dimension (row-vector array row-index) 0 )))
+  ;;       1)))
+  ;; (is (compare-imas-by-element (column-vector array 1) (row-vector (transpose array) 1)))
+  ;; (is (compare-imas-by-element (submatrix (submatrix array 0 0 2 2) 1 1 1 1)
+  ;;                              (submatrix (submatrix array 1 1 2 2) 0 0 1 1)))
+  )
 
 (deftest reshape-test (2d-arr)
   ;; Identity reshaping
