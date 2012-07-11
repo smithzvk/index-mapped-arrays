@@ -90,8 +90,8 @@ by the ``_'' symbol."
 
 ;;<<>>=
 (defun permute-list (perm list)
-  "Permute LIST, sending the ith element of list to the the position
-given by the ith element of PERM."
+  "Permute LIST, sending the ith element of list to the the position given by
+the ith element of PERM.  PERM should be at least as long as LIST."
   (mapcar #'cdr
           (sort (mapcar #'cons perm list)
                 #'< :key #'car)))

@@ -399,10 +399,10 @@ elements."
 ;; @\subsection{Some other useful maps}
 
 ;; Now we define a few extremely useful index maps.  Here we define the maps
-;; <<pbc-array>> and <<index-shift>>.  The map <<pbc-array>> wraps indices that
-;; become too large back to zero and indices that become too small (negative)
-;; back to the maximum value.  The map <<index-shift>> which applies a shift to
-;; the indices.
+;; <<transpose>>, <<pbc-array>>, and <<index-shift>>.  The map <<pbc-array>>
+;; wraps indices that become too large back to zero and indices that become too
+;; small (negative) back to the maximum value.  The map <<index-shift>> which
+;; applies a shift to the indices.
 
 ;; I had to include a handful of utilities here.  This should be cleaned up
 ;; later (factored into a different file or library).
