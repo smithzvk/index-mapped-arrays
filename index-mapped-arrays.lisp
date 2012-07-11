@@ -348,6 +348,54 @@ elements."
 (def-generic-map
     (defun add-index (ima n)
       (split-dimension ima n 1)))
+
+;; @We also provide a general purpose method of reshaping the IMA more akin to a
+;; displaced array.  This interface is through the <<group-elements-by>> method.
+;; This method takes an IMA, an ordering specifier (which tells the function if
+;; we should treat this as row major, column major, or some arbitrary ordering
+;; of the indicies), and the new extents of the array.  This is implemented as a
+;; new fundamental map instead of an extension of split-dimension and
+;; combine-dimensions because it is sufficiently different for the
+;; implementation at the various IMA levels.
+
+;; This is still under development...
+
+(def-generic-map
+    ;; (defun row-major-group-elements-by (ima &rest extents)
+    ;;   (apply #'group-elements-by :row-major extents))
+    (defmethod group-elements-by (ima ordering &rest extents)
+      (destructuring-bind (ordering perm-extents)
+          (case ordering
+             (:row-major (list
+                          (iter (for i below (max (length (ima-dimensions ima))
+                                                  (length extents)))
+                            (collect i))
+                          extents))
+             (:column-major (list
+                             (reverse
+                              (iter (for i below (max (length (ima-dimensions ima))
+                                                      (length extents)))
+                                (collect i)))
+                             (reverse extents)))
+             (otherwise (list ordering
+                              (permute-list ordering extents))))
+        (map-indices ima
+                     (let ((dims (ima-dimensions ima))
+                           (inverse-permutation
+                             (permute-list
+                              ordering
+                              (iter (for i below (max (length (ima-dimensions ima))
+                                                      (length extents)))
+                                (collect i)))))
+                       (lambda (idx)
+                         (permute-list
+                          ordering
+                          (nd-index (linear-index
+                                            (permute-list inverse-permutation idx)
+                                            perm-extents)
+                                    dims))))
+                     extents))))
+
 ;; @\subsection{Some other useful maps}
 
 ;; Now we define a few extremely useful index maps.  Here we define the maps

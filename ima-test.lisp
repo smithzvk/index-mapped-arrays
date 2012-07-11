@@ -12,6 +12,7 @@
 
 ;;<<>>=
 (deftest run-tests ()
+  (reshape-test-fixed)
   (list-tests)
   (array-tests))
 
@@ -125,6 +126,27 @@
   ;;      (apply #'group-elements-by 2d-arr  (ima-dimensions 2d-arr))))
   )
 
+(deftest reshape-test-fixed ()
+  (let ((ima '((1 3) (2 4))))
+    (is (compare-imas-by-element
+         '(1 3 2 4)
+         (group-elements-by ima :row-major 4)))
+    (is (compare-imas-by-element
+         '((1) (3) (2) (4))
+         (group-elements-by ima :row-major 4 1)))
+    (is (compare-imas-by-element
+         '((1 3 2 4))
+         (group-elements-by ima :row-major 1 4)))
+
+    (is (compare-imas-by-element
+         '(1 2 3 4)
+         (group-elements-by ima :column-major 4)))
+    (is (compare-imas-by-element
+         '((1) (2) (3) (4))
+         (group-elements-by ima :column-major 4 1)))
+    (is (compare-imas-by-element
+         '((1 2 3 4))
+         (group-elements-by ima :column-major 1 4)))))
 
 ;;<<>>=
 (deftest mutation-test (2d-arr)
