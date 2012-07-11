@@ -15,7 +15,7 @@ with standard Common Lisp.
 
 Index Mapped Arrays is written in portable ANSI CL and has only a few
 dependencies (Alexandria, Iterate, and CL-Match).  It is tested routinely and
-known to work on recent versions of SBCL, CMUCL, ECL, CLISP, ABCL.  If this
+known to work on recent versions of SBCL, CMUCL, ECL, CCL, CLISP, ABCL.  If this
 library doesn't work on one of these implementations or any ANSI compatible
 implementation, please report a bug.
 
