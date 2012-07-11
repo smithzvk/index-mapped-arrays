@@ -48,7 +48,36 @@
   (is (compare-imas-by-element (row-vector array 1) (column-vector (transpose array) 1)))
   (is (compare-imas-by-element (column-vector array 1) (row-vector (transpose array) 1)))
   (is (compare-imas-by-element (submatrix (submatrix array 0 0 2 2) 1 1 1 1)
-                               (submatrix (submatrix array 1 1 2 2) 0 0 1 1))))
+                               (submatrix (submatrix array 1 1 2 2) 0 0 1 1)))
+  (reshape-test array))
+
+
+(deftest reshape-test (2d-arr)
+  ;; Identity reshaping
+  (is (compare-imas-by-element
+       2d-arr
+       (combine-dimensions
+        (split-dimension 2d-arr 1 (ima-dimension 2d-arr 0)) 1)))
+  (is (compare-imas-by-element
+       2d-arr
+       (combine-dimensions
+        (split-dimension 2d-arr 0 (ima-dimension 2d-arr 0)) 0)))
+
+  ;; generic reshaping
+  (is (compare-imas-by-element
+       2d-arr
+       (apply #'group-elements-by 2d-arr :row-major (ima-dimensions 2d-arr))))
+
+  (is (compare-imas-by-element
+       2d-arr
+       (apply #'group-elements-by 2d-arr :column-major (ima-dimensions 2d-arr))))
+
+  ;; Random permutation
+  ;; (is (comparesimas-by-element
+  ;;      2d-arr
+  ;;      (apply #'group-elements-by 2d-arr  (ima-dimensions 2d-arr))))
+  )
+
 
 ;;<<>>=
 (deftest mutation-test (2d-arr)
