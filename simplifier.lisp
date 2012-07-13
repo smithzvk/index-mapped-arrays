@@ -10,7 +10,6 @@
         (t nil)))
 
 ;;<<>>=
-#+cl-match
 (defun simplify (new-map ima)
   "A basic, hard-coded, pattern based simplifier."
   (cond ((and (not (eql :unknown new-map))
@@ -27,15 +26,9 @@
                     ;; permutation of the original list, permuted by the
                     ;; permuation of the permutation.  It's so simple, man
                     (permute-indices (data-of ima) new-permutation))))
-             ((list (list :block start1 extent1)
-                    (list (list :block start2 extent2) x))
+             ((list (list :block start1 extent1) (list (list :block start2 extent2) x))
               (get-block (data-of ima) (mapcar #'+ start1 start2)
                          extent1))
              (otherwise nil))))
         (t nil)))
-#-cl-match
-(defun simplify (new-map ima)
-  "A basic, hard-coded, pattern based simplifier.  This is a stub, this does
-nothing."
-  nil)
 
