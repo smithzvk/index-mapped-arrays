@@ -26,7 +26,8 @@
                        (if (= 1 (length (ima-dimensions array)))
                            (format stream "~S" (imref array i))
                            (output-guts stream (get-slice array 0 i)))))))
-           (output-guts stream array)))))
+           (output-guts stream array))))
+  array)
 
 ;;<<>>=
 (defmethod print-object ((array index-mapped-array) stream)
