@@ -528,7 +528,8 @@ until it finds a non-index-mapped-array structure, then unmaps into that."
                    (while (typep arr 'index-mapped-array))
                    (for arr = (data-of arr))
                    (finally (return arr)))
-                 :dims dims))
+                 :dims (or dims
+                           (ima-dimensions ima))))
 
 ;; @This is still irksome.  I would like to have the new array more like the
 ;; original, including element type for those data structures that support it.
