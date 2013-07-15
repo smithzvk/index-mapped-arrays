@@ -573,4 +573,8 @@ match in dimensionality."
             (apply fn el (mapcar (lambda (x) (ima-flat-ref x i dims)) more-imas))))
     ret-arr))
 
+(defun reduce-ima (fn ima)
+  "Like REDUCE but for IMAs of arbitrary dimensionality."
+  (reduce fn (flatten (unmap-into 'list ima))))
+
 ;; @@ printer.lisp
