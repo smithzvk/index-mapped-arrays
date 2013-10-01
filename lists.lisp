@@ -13,7 +13,7 @@
 
 ;; @Here we have our nested list interface for IMA.  Understand that it is
 ;; provided here because lists are so common, but this is far from an efficient
-;; data structure for an array (think random access in linear time, ugh).  I
+;; data structure for an array (think random access in linear time, ugh).  In
 ;; light of this, I didn't really try to make this the best it can be, so it is
 ;; probably very slow, so don't use it for calculations.  One thing I tried very
 ;; hard to do is to make it easy to convert between underlying data structures,
@@ -28,6 +28,12 @@
 ;; likely, <<imref>> needs optimizing (doing this with <<aref>> runs about 10
 ;; times faster).
 
+;; @Dimensionality is also a weak spot when it comes to list IMAs.  This will
+;; usually work as expected, but there are some corner cases where things just
+;; won't.  For, instance, you are very limited in your ability to make an array
+;; that has no elements in it.  For this kind of work, I suggest that you use a
+;; Lisp array, which will behave identically when used as an IMA or array.
+
 ;;<<ima-dimension-lists,2>>=
 (defmethod ima-dimension ((ima cons) axis)
   (length (n-times axis #'car ima)))
@@ -37,7 +43,7 @@
 
 ;;<<ima-dimensions-lists,2>>=
 (defmethod ima-dimensions ((ima cons))
-  ;; This extra binding is makes IMA work on CMUCL
+  ;; This extra binding makes IMA work on CMUCL
   (let ((ima ima))
     (iter (while (consp ima))
       (collect (length ima))
