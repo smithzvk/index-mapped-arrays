@@ -473,17 +473,27 @@ b_ji."
 ;; of data that is ``equivalent'', but without any emulated mappings.
 
 ;;<<>>=
-(defmacro def-unmapper (type (ima-sym) &body body)
+(defgeneric unmap-into (type-or-template ima &key &allow-other-keys)
+  (:documentation
+   "Returns an IMA that is like the IMA but of the specified type \(given as a~@
+    name or an object)."))
+
+;;<<>>=
+(defmacro def-unmapper (type (ima-sym &rest key-args) &body body)
   "Define a set unmapping routines: one that unmaps given the name of the type,
 one that unmaps given an example of the type, and one that notices the identity
 unmap \(e.g. we want a list and we already have a list)."
-  `(progn
-     (defmethod unmap-into ((type (eql ',type)) ,ima-sym)
-       ,@body)
-     (defmethod unmap-into ((type ,type) ,ima-sym)
-       (unmap-into ',type ,ima-sym))
-     (defmethod unmap-into ((type (eql ',type)) (,ima-sym ,type))
-       ,ima-sym)))
+  (let ((rest-args (gensym)))
+    `(progn
+       (defmethod unmap-into ((type (eql ',type)) ,ima-sym
+                              ,@(or key-args '(&key &allow-other-keys)))
+         ,@body)
+       (defmethod unmap-into ((type ,type) ,ima-sym
+                              &rest ,rest-args)
+         (apply #'unmap-into ',type ,ima-sym ,rest-args))
+       (defmethod unmap-into ((type (eql ',type)) (,ima-sym ,type)
+                              &key &allow-other-keys)
+         ,ima-sym))))
 
 ;; @The method <<base-type-of>> returns the base type of an ima.  This is the
 ;; main way an extension writer may change the behavior of <<unmap>>.
@@ -494,6 +504,7 @@ unmap \(e.g. we want a list and we already have a list)."
 
 ;;<<>>=
 (defmethod base-type-of (ima)
+  ;; If this isn't of type index-mapped-array, we don't do anything.
   ima)
 
 ;;<<>>=
@@ -538,7 +549,8 @@ until it finds a non-index-mapped-array structure, then unmaps into that."
 
 ;;<<>>=
 (defmethod make-ima-like (ima &key &allow-other-keys)
-  (error "I don't know how to make an IMA like this one"))
+  (error "I don't know how to make an IMA like this one.  To remedy this, define a method for MAKE-IMA-LIKE for ima type ~A."
+         (type-of ima)))
 
 ;;<<>>=
 (defmethod copy-ima (ima)

@@ -1,4 +1,6 @@
 
+(in-package :cl-user)
+
 ;;<<>>=
 (defpackage :index-mapped-arrays
   (:use :cl :iter :alexandria :cl-match)
@@ -35,5 +37,6 @@
            #:ensure-ima
            #:ima-p
            #:split-dimension
-           #:combine-dimensions))
+           #:combine-dimensions
+           #:reduce-ima))
 
