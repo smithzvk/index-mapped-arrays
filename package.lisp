@@ -3,7 +3,7 @@
 
 ;;<<>>=
 (defpackage :index-mapped-arrays
-  (:use :cl :iter :alexandria :cl-match)
+  (:use :cl :iter :alexandria)
   (:nicknames :ima)
   (:export #:imref
            #:immod

@@ -22,6 +22,6 @@ with the fundamental data structure and indices."
                (:file "grouping")
                (:file "printer"))
   :serial t
-  :depends-on (:alexandria :cl-match :iterate))
+  :depends-on (:alexandria :iterate))
 
 
